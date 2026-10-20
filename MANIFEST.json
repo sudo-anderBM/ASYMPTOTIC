@@ -1,0 +1,196 @@
+{
+  "audience": "participantes",
+  "notice": "CIFOX: contenido educativo; datos simulados. Hashes SHA256 excluyen el propio manifiesto.",
+  "files": [
+    {
+      "path": ".gitignore",
+      "bytes": 52,
+      "sha256": "d3487aaab628a6fb33abcb76f0b4532f223515b9f01a809d94d7fb4adacaa601"
+    },
+    {
+      "path": ".streamlit/config.toml",
+      "bytes": 82,
+      "sha256": "dc99bc2bad6458213be35be120788264ba4bcd27310985419532f62636c5b975"
+    },
+    {
+      "path": "LICENSE",
+      "bytes": 1285,
+      "sha256": "1383575aec30c1fa0620ddb36e706f5d10b5955ad53429bb1ed62ee144100c81"
+    },
+    {
+      "path": "README.md",
+      "bytes": 4709,
+      "sha256": "5edd02bb1059dde89c0dc20381338657e80be664c4ffe730883331dea2abf749"
+    },
+    {
+      "path": "common/__init__.py",
+      "bytes": 69,
+      "sha256": "62a7f98968884ade52f57ed5c87731a43f3eaf47b1be8be50f98354ec5bfed75"
+    },
+    {
+      "path": "common/cifox.py",
+      "bytes": 3286,
+      "sha256": "1ffd7fa6af9f46b47c90a09c07ed939fa1da8668d236c014f0886ee686208112"
+    },
+    {
+      "path": "data/operaciones_simuladas.csv",
+      "bytes": 59133,
+      "sha256": "a498db9c2251a8f9dc761ab08f30f59f3e8269ac5a71546219a2d1b5552e7088"
+    },
+    {
+      "path": "data/reference_metrics.json",
+      "bytes": 301,
+      "sha256": "4e39f3c98222a7220a429714f876d9dfe80f2d4a3b716932cc7cc30b6ed127cd"
+    },
+    {
+      "path": "docs/DATA_DICTIONARY.md",
+      "bytes": 2427,
+      "sha256": "30cfd258181577dee3b7b348dc98e7606c4e825d223f0f1c82b8689b00911fdf"
+    },
+    {
+      "path": "docs/DEPENDENCIES.md",
+      "bytes": 1620,
+      "sha256": "e9dfda1e888f7b530be81618e5675cc89778050c585b62ac9f8d1f82384d7a51"
+    },
+    {
+      "path": "docs/EXERCISES.md",
+      "bytes": 1749,
+      "sha256": "dfc6ea4e21d21f1d5a99a2ccaca514f773d6e056937e3ee9aaffe8a23b44c76f"
+    },
+    {
+      "path": "docs/METRICS.md",
+      "bytes": 3226,
+      "sha256": "0aaa51c045c061dc4063d9f28beab3fee4eb9d6b7549609a147c7635a8021167"
+    },
+    {
+      "path": "docs/benchmark_if_example.json",
+      "bytes": 685,
+      "sha256": "85f1ffe7bfb86734b5f79a316c1b3a95f124b09a258e98833d2c2639759fc5e8"
+    },
+    {
+      "path": "docs/benchmark_rules_example.json",
+      "bytes": 651,
+      "sha256": "ede06b57e4043a7e3bb701e2e734bc1542c8a8b739b2050fc3563ce594c069db"
+    },
+    {
+      "path": "lock-ml-linux-py312.txt",
+      "bytes": 184,
+      "sha256": "ef85062108336bd19b842c3b356e3c0b90609d53af83e6b2d4c9266c53aae23a"
+    },
+    {
+      "path": "requirements-ml.txt",
+      "bytes": 76,
+      "sha256": "16d155db8031933a3370cd48dff4b35b0dfca70ab2eeb00c8df35a6d07328b89"
+    },
+    {
+      "path": "stack_a_streamlit/README.md",
+      "bytes": 6404,
+      "sha256": "0f2a2082d1087ebfd49bce143a6d286e32472cf64854fdeac1f2eaa57f5544bf"
+    },
+    {
+      "path": "stack_a_streamlit/app.py",
+      "bytes": 9483,
+      "sha256": "a126a6e5909dc838dd68ac8e0a8f93536cac2ecba1a92055601eb164be7a3983"
+    },
+    {
+      "path": "stack_a_streamlit/lock-linux-py312.txt",
+      "bytes": 628,
+      "sha256": "e6a5ff71a3e6e96c8be4d4206ec5428eb34e2f03333cf3eb79bf3c8e46fd2046"
+    },
+    {
+      "path": "stack_a_streamlit/requirements.txt",
+      "bytes": 112,
+      "sha256": "1963e5d7e48d60320b48674156b5719bd658567d275b60605d509f681dfcc6fc"
+    },
+    {
+      "path": "stack_a_streamlit/test_app.py",
+      "bytes": 6149,
+      "sha256": "2d99588322c9dc7b631b49ead78b5ea1b65d2f01adbc422a2c26ea1268b45512"
+    },
+    {
+      "path": "stack_b_api_web/README.md",
+      "bytes": 10335,
+      "sha256": "cee51eaa3fa1f0fce9d9d2b4607732287112c4f5ce2770f37a6a64accb521959"
+    },
+    {
+      "path": "stack_b_api_web/__init__.py",
+      "bytes": 69,
+      "sha256": "07b345a3b6cd9c905adb6595805990183ced8484b96792857ee4c5abe5d48175"
+    },
+    {
+      "path": "stack_b_api_web/lock-linux-py312.txt",
+      "bytes": 380,
+      "sha256": "cf39a8d5f935d459c10430377f04d92dec037aeb8925a54ca4d645460cad1e47"
+    },
+    {
+      "path": "stack_b_api_web/main.py",
+      "bytes": 5443,
+      "sha256": "7083aa78c8ab4f9d373af377915a10e383b1b59869551f98e5c2a38809e542d0"
+    },
+    {
+      "path": "stack_b_api_web/requirements.txt",
+      "bytes": 75,
+      "sha256": "3740289e9326573ba567f41702758a7d8261e8908c42a0aa471313b58359be61"
+    },
+    {
+      "path": "stack_b_api_web/static/app.js",
+      "bytes": 12459,
+      "sha256": "89c8c655b4b71f3a47d7d8d2bc481942ebbffd424cd3fcbc8e5bbd3e6b5bf97e"
+    },
+    {
+      "path": "stack_b_api_web/static/favicon.svg",
+      "bytes": 247,
+      "sha256": "abd68903d33404ea0efd0d1fb572007ac2a71bfd28d1e5964723884ce5b67fa2"
+    },
+    {
+      "path": "stack_b_api_web/static/index.html",
+      "bytes": 9114,
+      "sha256": "f583fc2915fcf2548a58b985dacc5420b795b3a01f01fa360f8dc195333535cb"
+    },
+    {
+      "path": "stack_b_api_web/static/style.css",
+      "bytes": 13501,
+      "sha256": "8721007310677fba633973b3918a098d99eebf950d09d2c3679f2c19ef505c32"
+    },
+    {
+      "path": "stack_b_api_web/tests/__init__.py",
+      "bytes": 54,
+      "sha256": "ee09ae36532d3fd5b965324348592836924ab7f5857058aa3f99c80d7408887e"
+    },
+    {
+      "path": "stack_b_api_web/tests/browser_smoke.cjs",
+      "bytes": 5326,
+      "sha256": "fba6b948862d3534ed2c8984cea2276a96ac0440e811f4caebc5452d0f43d697"
+    },
+    {
+      "path": "stack_b_api_web/tests/test_api.py",
+      "bytes": 6197,
+      "sha256": "ee94802bec2d3c468811af39a6389c9288c67ba00679c5512b6fc1950f11fd27"
+    },
+    {
+      "path": "tests/test_benchmark.py",
+      "bytes": 757,
+      "sha256": "8d4deb3acd18307c4f4432384f8de2fb3a058c895a66a876932aa0028dda3b3d"
+    },
+    {
+      "path": "tests/test_common.py",
+      "bytes": 2564,
+      "sha256": "44d4a46e8da2c81c5d250999486189937c7859813d8cc9ecd66b0f0c01c9fa89"
+    },
+    {
+      "path": "tools/compare_detectors.py",
+      "bytes": 2741,
+      "sha256": "9f931af1e80d619cdecbad588f7ac1993dbed78bce38c03a27152fb978fbb434"
+    },
+    {
+      "path": "tools/generate_data.py",
+      "bytes": 2359,
+      "sha256": "8606e6d456b8ed12a6dca172ccfdffebb05a7b7a3622fffae1f6db5d78a6eb01"
+    },
+    {
+      "path": "tools/package_kit.py",
+      "bytes": 3260,
+      "sha256": "ad7802870a594f79e220df4e487dbbaec0489851405828c70834500d95c578db"
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "notice": "DATOS SIMULADOS; agregaci\u00f3n de las 216 filas referencia",
+  "metrics": {
+    "pue": 1.2675626613531357,
+    "wue_l_kwh": 0.36646215531320525,
+    "energy_it_kwh": 35509.846,
+    "energy_total_kwh": 45010.9549,
+    "water_l": 13013.0147,
+    "rows": 216,
+    "rule_alerts": 0
+  }
+}

@@ -1,0 +1,2 @@
+# Opcional; instalar además de requisitos de un stack.
+scikit-learn==1.8.0

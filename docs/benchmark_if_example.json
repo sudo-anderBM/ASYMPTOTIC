@@ -1,0 +1,21 @@
+{
+  "method": "isolation_forest",
+  "simulated_data": true,
+  "train_rows": 216,
+  "test_rows": 288,
+  "scores": {
+    "tp": 10,
+    "fp": 16,
+    "fn": 11,
+    "precision": 0.38461538461538464,
+    "recall": 0.47619047619047616
+  },
+  "wall_seconds": 0.8572495209991757,
+  "cpu_seconds": 0.857197062,
+  "python_peak_bytes": 656836,
+  "assumed_watts": 30,
+  "estimated_kwh": 7.143746008326464e-06,
+  "assumed_gco2e_per_kwh": 300,
+  "estimated_gco2e": 0.0021431238024979394,
+  "note": "Estimación de escenario; no medida. Sin PUE ni agua ni fabricación/red/imports. Python peak no es RAM total. Tiempo incluye entrenamiento para IF; reglas no entrenan. OT no está en features IF."
+}

@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Panel educativo CIFOX con datos simulados de energía, agua y eventos OT. Ejecución local y de solo lectura.">
+  <title>CIFOX · Laboratorio de operaciones</title>
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/style.css">
+  <script src="/static/app.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#contenido">Saltar al contenido</a>
+  <header class="topbar">
+    <a class="brand" href="/" aria-label="CIFOX, inicio"><span class="brand-mark" aria-hidden="true">C<span>·</span></span><span>CIFOX<span class="brand-caption">LABORATORIO DE OPERACIONES</span></span></a>
+    <div class="topbar-right"><span class="local-label"><span class="status-dot" aria-hidden="true"></span>Local · CPU</span><span class="stack-label">KIT B / API + WEB</span></div>
+  </header>
+  <main id="contenido">
+    <section class="hero" aria-labelledby="page-title">
+      <div class="hero-copy">
+        <p class="eyebrow">OBSERVAR. ENTENDER. APRENDER.</p>
+        <h1 id="page-title">Una mirada clara<br>a tus operaciones<span class="orange">.</span></h1>
+        <p class="hero-description">Explora energía, agua y señales de atención en un centro de datos de ejemplo.</p>
+        <div class="hero-tags"><span>Sin cuentas</span><span>Sin claves</span><span>Solo lectura</span></div>
+      </div>
+      <aside class="simulation-card" aria-label="Aviso sobre los datos">
+        <div class="simulation-icon" aria-hidden="true">✳</div>
+        <div><span class="simulation-pill">DATOS SIMULADOS</span><h2>Un espacio para probar</h2><p>Las cifras y las alertas son ficticias. No representan una instalación real ni permiten controlar equipos.</p></div>
+      </aside>
+    </section>
+
+    <section class="filter-panel" aria-labelledby="filter-heading">
+      <div class="filter-title"><h2 id="filter-heading">Tu vista</h2><p>Elige qué quieres explorar</p></div>
+      <form id="filters" class="filters">
+        <div class="field"><label for="site-filter">Centro</label><select id="site-filter" name="site_id"><option value="">Todos los centros</option></select></div>
+        <div class="field"><label for="cooling-filter">Refrigeración</label><select id="cooling-filter" name="cooling_type"><option value="">Todos los tipos</option></select></div>
+        <div class="field"><label for="split-filter">Conjunto</label><select id="split-filter" name="split"><option value="">Todo el periodo</option></select></div>
+        <button id="refresh-button" class="primary-button" type="submit"><span aria-hidden="true">↻</span> Actualizar</button>
+      </form>
+    </section>
+    <div class="view-meta"><p id="period">Cargando el periodo…</p><p id="load-status" role="status" aria-live="polite">Leyendo el CSV local</p></div>
+    <div id="error-panel" class="error-panel" role="alert" hidden></div>
+    <div id="empty-panel" class="empty-panel" hidden>No hay registros para esta combinación. Prueba otro centro o tipo de refrigeración.</div>
+
+    <section class="metric-grid" aria-label="Indicadores del periodo filtrado" aria-busy="true" id="metric-grid">
+      <article class="metric-card"><p class="metric-name">Eficiencia energética <span class="metric-code">PUE</span></p><p class="metric-value" id="metric-pue">—</p><p class="metric-description">Energía total / energía TI</p><p class="metric-foot">Menor valor = menor sobrecarga</p></article>
+      <article class="metric-card"><p class="metric-name">Intensidad de agua <span class="metric-code">WUE</span></p><p class="metric-value"><span id="metric-wue">—</span><span class="metric-unit"> L/kWh</span></p><p class="metric-description">Agua in situ / energía TI</p><p class="metric-foot">No incluye agua fuera del centro</p></article>
+      <article class="metric-card"><p class="metric-name">Energía total <span class="metric-symbol" aria-hidden="true">↗</span></p><p class="metric-value"><span id="metric-energy">—</span><span class="metric-unit"> kWh</span></p><p class="metric-description" id="metric-it">Energía TI: — kWh</p><p class="metric-foot">Suma del periodo seleccionado</p></article>
+      <article class="metric-card"><p class="metric-name">Agua retirada <span class="metric-symbol" aria-hidden="true">◌</span></p><p class="metric-value"><span id="metric-water">—</span><span class="metric-unit"> L</span></p><p class="metric-description">Retirada de agua in situ</p><p class="metric-foot">Suma del periodo seleccionado</p></article>
+    </section>
+
+    <div class="analysis-grid">
+      <section class="panel chart-panel" aria-labelledby="chart-title">
+        <div class="panel-heading"><div><p class="eyebrow">LA EVOLUCIÓN</p><h2 id="chart-title">Día a día</h2></div><div class="segmented-control" role="group" aria-label="Magnitud del gráfico"><button type="button" class="active" data-chart="energy" aria-pressed="true">Energía</button><button type="button" data-chart="water" aria-pressed="false">Agua</button></div></div>
+        <p class="panel-description" id="chart-description">Suma diaria de energía total y energía TI, en kWh. Horas en UTC.</p>
+        <div class="chart-wrap"><svg id="trend-chart" viewBox="0 0 720 245" role="img" aria-labelledby="chart-svg-title chart-svg-desc"><title id="chart-svg-title">Evolución diaria</title><desc id="chart-svg-desc">El gráfico se carga a partir del CSV simulado.</desc></svg></div>
+        <div id="chart-legend" class="chart-legend"><span><i class="legend-total" aria-hidden="true"></i>Energía total</span><span><i class="legend-it" aria-hidden="true"></i>Energía TI</span></div>
+        <details class="chart-data"><summary>Ver los valores del gráfico</summary><div class="table-scroll"><table><caption class="sr-only">Totales diarios del gráfico</caption><thead><tr id="chart-data-head"></tr></thead><tbody id="chart-data-body"></tbody></table></div></details>
+      </section>
+      <aside class="panel alert-panel" aria-labelledby="alert-title"><p class="eyebrow">SEÑALES PARA REVISAR</p><div class="alert-count-line"><span id="alert-count">—</span><span class="alert-symbol" aria-hidden="true">!</span></div><h2 id="alert-title">registros con alerta</h2><p id="alert-description">Reglas sencillas de energía, agua, temperatura y eventos OT.</p><div class="alert-rule"></div><p class="small-note">Una alerta indica una señal para revisar. No es un diagnóstico ni una recomendación automática de operación.</p><button type="button" id="view-alerts" class="text-button">Ver registros señalados <span aria-hidden="true">↗</span></button></aside>
+    </div>
+
+    <section class="panel records-panel" aria-labelledby="records-title">
+      <div class="panel-heading"><div><p class="eyebrow">DETRÁS DE LOS INDICADORES</p><h2 id="records-title">Registros de ejemplo</h2></div><label class="checkbox-label"><input type="checkbox" id="alerts-only"> Solo con alerta</label></div>
+      <p class="panel-description">Medidas horarias simuladas. Las horas se muestran en UTC. Las alertas se calculan con reglas transparentes.</p>
+      <div class="table-scroll" tabindex="0" role="region" aria-label="Registros, desplazamiento horizontal disponible">
+        <table><caption class="sr-only">Registros simulados del periodo seleccionado</caption><thead><tr><th scope="col">Fecha · UTC</th><th scope="col">Centro</th><th scope="col">Refrigeración</th><th scope="col" class="numeric">TI · kWh</th><th scope="col" class="numeric">Total · kWh</th><th scope="col" class="numeric">Agua · L</th><th scope="col">Señal de regla</th></tr></thead><tbody id="records-body"><tr><td colspan="7">Cargando registros…</td></tr></tbody></table>
+      </div>
+      <div class="table-footer"><p id="record-count" role="status" aria-live="polite">— registros</p><div class="pagination"><button type="button" id="prev-page" class="secondary-button" disabled>Anterior</button><span id="page-number">1 / 1</span><button type="button" id="next-page" class="secondary-button" disabled>Siguiente</button></div></div>
+    </section>
+
+    <section class="learning-panel" aria-labelledby="learning-title"><div class="learning-number" aria-hidden="true">01 →</div><div><h2 id="learning-title">Tu primer recorrido</h2><p>Filtra por un centro, compara los indicadores y revisa las señales. PUE y WUE se calculan a partir de las sumas del periodo, no promediando ratios horarios. Compara siempre periodos y límites equivalentes.</p></div><a class="api-link" href="/api/metrics" target="_blank" rel="noopener">Explorar la API <span class="sr-only">(abre una nueva pestaña)</span><span aria-hidden="true">↗</span></a></section>
+  </main>
+  <footer><span>CIFOX · Kit de aprendizaje</span><span>DATOS SIMULADOS · Ejecución local · Sin acciones de control</span></footer>
+  <noscript><p class="error-panel">Activa JavaScript para usar el panel. Puedes consultar los datos en /api/metrics y /api/records.</p></noscript>
+</body>
+</html>
