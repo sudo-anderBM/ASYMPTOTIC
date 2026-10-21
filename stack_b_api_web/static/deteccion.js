@@ -342,6 +342,163 @@ $("grafica").addEventListener("keydown", (evento) => {
   mostrarExplicacion(marca);
 });
 
+// Vista de resumen
+
+const resumen = { datos: null, version: "normal", deEjemplo: false };
+const META_DETECCION = 0.9;       
+const MAX_FALSAS_DIA = 1;          
+const MAGNITUD_OBJETIVO = 0.1;     
+const formatoPct = new Intl.NumberFormat("es-MX", { style: "percent", maximumFractionDigits: 0 });
+
+async function cargarResumen() {
+  const tipo = $("tipo").value;
+  $("resumen-descripcion").textContent = "Cargando el barrido…";
+  try {
+    resumen.datos = await pedir("sweep", { tipo });
+    resumen.deEjemplo = USAR_EJEMPLO;
+  } catch (error) {
+    
+    try {
+      const r = await fetch("/static/mock/sweep.json", { cache: "no-store" });
+      resumen.datos = await r.json();
+      resumen.deEjemplo = true;
+    } catch (_) {
+      resumen.datos = null;
+      $("resumen-descripcion").textContent = `No se pudo cargar el barrido. ${error.message}`;
+      $("recomendacion").textContent = "";
+      $("grafica-resumen").replaceChildren();
+      return;
+    }
+  }
+  pintarResumen();
+}
+
+function recomendado(lista, indice) {
+  const cumplen = lista.filter((d) => d.deteccion[indice] >= META_DETECCION && d.falsas_alarmas_dia[indice] <= MAX_FALSAS_DIA);
+  cumplen.sort((a, b) => (a.fit_ms + a.pred_ms) - (b.fit_ms + b.pred_ms));
+  return cumplen[0] || null;
+}
+
+function nombreDe(id) {
+  return (detectores.get(id) || { nombre: id }).nombre;
+}
+
+function textoRecomendacion(datos, lista) {
+  const objetivo = datos.magnitudes.indexOf(MAGNITUD_OBJETIVO);
+  const problema = datos.tipo === "fuga" ? "fugas de agua" : "gastos extra de energía";
+  const ms = (d) => formato1.format(d.fit_ms + d.pred_ms);
+  const meta = `≥ ${formatoPct.format(META_DETECCION)} de los eventos con ≤ ${MAX_FALSAS_DIA} falsa alarma al día`;
+  if (objetivo >= 0) {
+    const r = recomendado(lista, objetivo);
+    if (r) {
+      return `Para ${problema} del ${formatoPct.format(MAGNITUD_OBJETIVO)}, el detector más barato que detecta ${meta} es ${nombreDe(r.id)}: ` +
+        `${formatoPct.format(r.deteccion[objetivo])} detectado, ${formato1.format(r.falsas_alarmas_dia[objetivo])} falsas alarmas/día, ${ms(r)} ms.`;
+    }
+  }
+  // Nadie cumple en el 10 %: buscamos la magnitud más pequeña en la que alguien sí cumple.
+  for (let i = 0; i < datos.magnitudes.length; i++) {
+    const r = recomendado(lista, i);
+    if (r) {
+      return `Ningún detector logra ${meta} con ${problema} del ${formatoPct.format(MAGNITUD_OBJETIVO)}. ` +
+        `El primero en lograrlo es ${nombreDe(r.id)}, a partir del ${formatoPct.format(datos.magnitudes[i])} (${ms(r)} ms).`;
+    }
+  }
+  return `Ningún detector logra ${meta} en este barrido.`;
+}
+
+function pintarResumen() {
+  const datos = resumen.datos;
+  if (!datos) return;
+  const lista = datos[resumen.version] || [];
+  const mags = datos.magnitudes;
+
+  $("resumen-titulo").textContent = datos.tipo === "fuga"
+    ? "Detección según el tamaño de la fuga"
+    : "Detección según el tamaño del gasto extra";
+  $("resumen-descripcion").textContent =
+    `${datos.tipo === "fuga" ? "Fugas de agua" : "Gasto extra de energía"}: porcentaje de eventos detectados según el tamaño del problema. ` +
+    `Cada punto resume ${datos.meta.eventos_por_punto} eventos (${datos.meta.semillas} semillas × 3 sitios × 3 ventanas); las barras verticales son el intervalo de confianza del 95 %.` +
+    (resumen.version === "dificil"
+      ? " Datos difíciles: el agua lleva ruido de ±5 % y una relación no lineal con la temperatura" +
+        (datos.tipo === "fuga" ? "." : "; la energía no cambia, por eso los resultados son casi iguales.")
+      : "");
+  $("recomendacion").textContent = (resumen.deEjemplo ? "EJEMPLO, no medido. " : "") + textoRecomendacion(datos, lista);
+
+  
+  const L = { izq: 60, der: 700, arriba: 20, abajo: 250 };
+  const lienzo = $("grafica-resumen");
+  lienzo.replaceChildren();
+  lienzo.append(svg("title", { id: "resumen-svg-titulo" }, "Fracción de eventos detectados por magnitud y detector"));
+  const paso = (L.der - L.izq) / mags.length;
+  const x = (i) => L.izq + paso * (i + 0.5);                      
+  const y = (v) => L.abajo - v * (L.abajo - L.arriba);            
+
+  for (const v of [0, 0.25, 0.5, 0.75, 1]) {
+    lienzo.append(svg("line", { x1: L.izq, x2: L.der, y1: y(v), y2: y(v), class: "chart-gridline" }));
+    lienzo.append(svg("text", { x: L.izq - 8, y: y(v) + 3, "text-anchor": "end", class: "det-svg-texto" }, formatoPct.format(v)));
+  }
+  
+  const iObj = mags.indexOf(MAGNITUD_OBJETIVO);
+  if (iObj >= 0) {
+    lienzo.append(svg("rect", { x: x(iObj) - paso / 2, y: L.arriba, width: paso, height: L.abajo - L.arriba, class: "det-banda-carril" }));
+  }
+  lienzo.append(svg("line", { x1: L.izq, x2: L.der, y1: y(META_DETECCION), y2: y(META_DETECCION), stroke: "#b76b30", "stroke-dasharray": "4 4", "stroke-width": 1 }));
+  lienzo.append(svg("text", { x: L.der, y: y(META_DETECCION) - 5, "text-anchor": "end", class: "det-svg-texto" }, `meta ${formatoPct.format(META_DETECCION)}`));
+
+  mags.forEach((m, i) => {
+    lienzo.append(svg("text", { x: x(i), y: L.abajo + 18, "text-anchor": "middle", class: "det-svg-texto" }, formatoPct.format(m)));
+  });
+  lienzo.append(svg("text", { x: (L.izq + L.der) / 2, y: L.abajo + 38, "text-anchor": "middle", class: "det-svg-unidad" }, "Tamaño del problema"));
+
+  lista.forEach((d, k) => {
+    const color = (detectores.get(d.id) || { color: "#66766e" }).color;
+    const dx = (k - (lista.length - 1) / 2) * 5;
+    let ruta = "";
+    d.deteccion.forEach((v, i) => {
+      ruta += `${i === 0 ? "M" : "L"}${(x(i) + dx).toFixed(1)} ${y(v).toFixed(1)}`;
+      const ic = d.deteccion_ic95 && d.deteccion_ic95[i];
+      if (ic) lienzo.append(svg("line", { x1: x(i) + dx, x2: x(i) + dx, y1: y(ic[0]), y2: y(ic[1]), stroke: color, class: "det-bigote" }));
+    });
+    lienzo.append(svg("path", { d: ruta, stroke: color, class: "det-linea" }));
+    d.deteccion.forEach((v, i) => {
+      const punto = svg("circle", { cx: x(i) + dx, cy: y(v), r: 3.5, fill: color });
+      punto.append(svg("title", {}, `${nombreDe(d.id)} · ${formatoPct.format(mags[i])}: ${formatoPct.format(v)} detectado, ${formato1.format(d.falsas_alarmas_dia[i])} falsas alarmas/día`));
+      lienzo.append(punto);
+    });
+  });
+
+  const leyenda = $("resumen-leyenda");
+  leyenda.replaceChildren();
+  for (const d of lista) {
+    const item = document.createElement("span");
+    const marca = document.createElement("i");
+    marca.setAttribute("aria-hidden", "true");
+    marca.style.backgroundColor = (detectores.get(d.id) || { color: "#66766e" }).color;
+    item.append(marca, document.createTextNode(`${nombreDe(d.id)} · ${formato1.format(d.fit_ms + d.pred_ms)} ms`));
+    leyenda.append(item);
+  }
+
+  const m = datos.meta;
+  $("resumen-meta").textContent = resumen.deEjemplo
+    ? "Barrido de EJEMPLO (valores no medidos): falta generar results/ con python -m greenai.sweep. Datos simulados."
+    : `${m.nota} Generado: ${m.generado} · equipo: ${m.equipo} · Python ${m.python}.`;
+}
+
+for (const boton of document.querySelectorAll("[data-version]")) {
+  boton.addEventListener("click", () => {
+    resumen.version = boton.dataset.version;
+    for (const b of document.querySelectorAll("[data-version]")) {
+      const activo = b === boton;
+      b.classList.toggle("active", activo);
+      b.setAttribute("aria-pressed", String(activo));
+    }
+    pintarResumen();
+  });
+}
+
+
+$("tipo").addEventListener("change", cargarResumen);
+
 function actualizarEtiquetaMagnitud() {
   $("magnitud-valor").textContent = `${$("magnitud").value} %`;
 }
@@ -376,4 +533,7 @@ $("modo").textContent = USAR_EJEMPLO
   : "";
 
 actualizarEtiquetaMagnitud();
-cargarDetectores().then(cargarEscenario);
+cargarDetectores().then(() => {
+  cargarEscenario();
+  cargarResumen();
+});
