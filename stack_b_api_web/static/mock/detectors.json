@@ -1,0 +1,35 @@
+{
+  "simulated": true,
+  "detectores": [
+    {
+      "id": "1_reglas",
+      "nombre": "Reglas del kit",
+      "descripcion": "Umbrales fijos: PUE > 1.6, agua > 1.5 L/kWh, entrada > 29 °C",
+      "entrena": false
+    },
+    {
+      "id": "2_isolation_forest",
+      "nombre": "IsolationForest",
+      "descripcion": "Modelo que aprende qué es raro; caro de ajustar",
+      "entrena": true
+    },
+    {
+      "id": "3_residual_3sigma",
+      "nombre": "Residual 3σ",
+      "descripcion": "Compara con lo esperado para la carga y la temperatura de cada sitio",
+      "entrena": true
+    },
+    {
+      "id": "4_residual_cusum",
+      "nombre": "Residual CUSUM",
+      "descripcion": "Acumula desviaciones pequeñas del residual",
+      "entrena": true
+    },
+    {
+      "id": "5_zscore_simple",
+      "nombre": "z-score simple",
+      "descripcion": "Desviación de PUE y agua/kWh respecto a su promedio normal",
+      "entrena": true
+    }
+  ]
+}
