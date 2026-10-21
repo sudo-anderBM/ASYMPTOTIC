@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="ASYMPTOTIC: detección de fugas de agua e ineficiencias en centros de datos simulados; qué detector ve una fuga pequeña y cuánto cuesta en cómputo.">
+  <title>ASYMPTOTIC · Detección de fugas</title>
+  <link rel="icon" href="/static/asymptotic.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="/static/deteccion.css">
+  <script src="/static/deteccion.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#contenido">Saltar al contenido</a>
+  <header class="topbar">
+    <a class="brand" href="/static/deteccion.html" aria-label="ASYMPTOTIC, inicio">
+      <span class="asy-mark" aria-hidden="true">
+        <svg viewBox="0 0 48 48" focusable="false">
+          <rect width="48" height="48" rx="12" fill="#173b39"/>
+          <path d="M24 4.5C24 4.5 9.5 20 9.5 29.5a14.5 14.5 0 0 0 29 0C38.5 20 24 4.5 24 4.5Z" fill="#5e95a4"/>
+          <path d="M16.5 38L23 17.5M31.5 38L25 17.5" fill="none" stroke="#f6f6f1" stroke-width="3" stroke-linecap="round"/>
+          <line x1="13" y1="30.5" x2="35" y2="30.5" stroke="#ebb17b" stroke-width="2" stroke-dasharray="2.6 2"/>
+        </svg>
+      </span>
+      <span>ASYMPTOTIC<span class="brand-caption">DETECCIÓN DE FUGAS · GREEN AI</span></span>
+    </a>
+    <div class="topbar-right"><span class="local-label"><span class="status-dot" aria-hidden="true"></span>Local · CPU</span><a class="stack-label" href="/">Panel del kit CIFOX →</a></div>
+  </header>
+
+  <div id="aviso-simulado" class="aviso-simulado" role="note">
+    <strong>DATOS SIMULADOS</strong> — prototipo educativo. Las fugas se inyectan a propósito para probar detectores; no representan una instalación real.
+  </div>
+
+  <main id="contenido">
+    <section class="det-hero" aria-labelledby="page-title">
+      <p class="eyebrow">ASYMPTOTIC · HACKATHON AGUASEGURA AI</p>
+      <h1 id="page-title">¿Qué detector ve una fuga pequeña<span class="orange">?</span></h1>
+      <p class="asy-lema">Matemáticas × Física × IA × Eficiencia computacional</p>
+      <p class="hero-description">Inyectamos una fuga de tamaño controlado en un centro de datos simulado y comparamos cinco detectores: cuántas fugas encuentran, cuánto tardan, cuántas falsas alarmas dan y cuánto cómputo gastan.</p>
+      <div class="demo-acciones">
+        <button type="button" id="demo-iniciar" class="primary-button demo-boton"><span aria-hidden="true">▶</span> Reproducir demo guiada</button>
+      </div>
+    </section>
+
+    <section class="filter-panel" aria-labelledby="controles-titulo">
+      <div class="filter-title"><h2 id="controles-titulo">Escenario</h2><p>Elige dónde y de qué tamaño es el problema</p></div>
+      <form id="controles" class="filters det-controles">
+        <div class="field"><label for="sitio">Centro de datos</label>
+          <select id="sitio" name="sitio">
+            <option value="SIM-A">SIM-A · refrigeración por aire</option>
+            <option value="SIM-B">SIM-B · evaporativa</option>
+            <option value="SIM-C">SIM-C · líquida</option>
+          </select></div>
+        <div class="field"><label for="tipo">Problema</label>
+          <select id="tipo" name="tipo">
+            <option value="fuga">Fuga de agua</option>
+            <option value="ineficiencia">Gasto extra de energía</option>
+          </select></div>
+        <div class="field field-wide"><label for="magnitud">Tamaño del problema: <output id="magnitud-valor" for="magnitud">10 %</output></label>
+          <input id="magnitud" name="magnitud" type="range" min="0" max="100" step="5" value="10">
+          <div class="atajos" role="group" aria-label="Tamaños rápidos">
+            <button type="button" class="atajo" data-magnitud="0">Sin problema</button>
+            <button type="button" class="atajo activo" data-magnitud="10">Pequeño · 10 %</button>
+            <button type="button" class="atajo" data-magnitud="30">Mediano · 30 %</button>
+            <button type="button" class="atajo" data-magnitud="100">Grande · 100 %</button>
+          </div></div>
+        <div class="field field-small"><label for="semilla">Semilla</label>
+          <input id="semilla" name="semilla" type="number" min="1" max="1000" step="1" value="1" inputmode="numeric"></div>
+      </form>
+    </section>
+    <div class="view-meta"><p id="modo"></p><p id="estado" role="status" aria-live="polite">Cargando…</p></div>
+    <div id="error" class="error-panel" role="alert" hidden></div>
+
+    <section id="veredicto" class="veredicto" aria-labelledby="veredicto-frase">
+      <p class="eyebrow">VEREDICTO DE ESTE ESCENARIO</p>
+      <h2 id="veredicto-frase" class="veredicto-frase" aria-live="polite">Cargando el escenario…</h2>
+      <div class="v-tarjetas">
+        <article class="v-tarjeta v-mala">
+          <p class="v-etiqueta">Reglas del kit</p>
+          <p class="v-cifra" id="v-reglas">—</p>
+          <p class="v-nota" id="v-reglas-nota"></p>
+        </article>
+        <article class="v-tarjeta v-buena">
+          <p class="v-etiqueta" id="v-mejor-nombre">Mejor detector</p>
+          <p class="v-cifra" id="v-mejor">—</p>
+          <p class="v-nota" id="v-mejor-nota"></p>
+        </article>
+        <article class="v-tarjeta">
+          <p class="v-etiqueta" id="v-exceso-etiqueta">Agua que pasó sin aviso</p>
+          <p class="v-cifra" id="v-exceso">—</p>
+          <p class="v-nota" id="v-exceso-nota"></p>
+        </article>
+        <article class="v-tarjeta">
+          <p class="v-etiqueta">Cómputo del mejor</p>
+          <p class="v-cifra" id="v-coste">—</p>
+          <p class="v-nota" id="v-coste-nota"></p>
+        </article>
+      </div>
+    </section>
+
+    <div class="det-grid">
+      <section class="panel" aria-labelledby="grafica-titulo">
+        <div class="panel-heading"><div><p class="eyebrow">LA PRUEBA</p><h2 id="grafica-titulo">Observado frente a esperado</h2></div></div>
+        <p class="panel-description" id="grafica-descripcion">Cargando la serie…</p>
+        <div class="chart-wrap det-chart"><svg id="grafica" viewBox="0 0 720 400" role="img" aria-labelledby="grafica-svg-titulo"><title id="grafica-svg-titulo">Serie horaria con alertas por detector</title></svg><div id="grafica-tooltip" class="det-tooltip" hidden></div></div>
+        <div id="grafica-leyenda" class="chart-legend det-leyenda"></div>
+      </section>
+
+      <aside id="explicacion" class="panel alert-panel det-explicacion" aria-labelledby="explicacion-titulo" aria-live="polite">
+        <p class="eyebrow">POR QUÉ SONÓ</p>
+        <h2 id="explicacion-titulo">Explicación de una alerta</h2>
+        <p id="explicacion-vacia">Haz clic en una marca de alerta de la gráfica (o selecciónala con Tab y pulsa Enter) para ver por qué se activó.</p>
+        <div id="explicacion-contenido" hidden>
+          <p class="exp-fecha" id="exp-fecha"></p>
+          <dl class="exp-datos">
+            <div><dt>Observado</dt><dd id="exp-observado"></dd></div>
+            <div><dt>Esperado</dt><dd id="exp-esperado"></dd></div>
+            <div><dt>Desviación</dt><dd id="exp-desviacion"></dd></div>
+          </dl>
+          <p id="exp-texto" class="exp-texto"></p>
+        </div>
+        <div class="alert-rule"></div>
+        <p class="small-note">Una alerta requiere revisión humana antes de actuar. El valor esperado lo calcula el modelo residual ajustado con el periodo de referencia.</p>
+      </aside>
+    </div>
+
+    <section class="panel det-tabla-panel" aria-labelledby="tabla-titulo">
+      <div class="panel-heading"><div><p class="eyebrow">COMPARACIÓN EN ESTE ESCENARIO</p><h2 id="tabla-titulo">Cinco detectores, mismo problema</h2></div></div>
+      <p class="panel-description">Resaltado: el detector que encontró todas las fugas con menos falsas alarmas; si empatan, el que dejó pasar menos agua y luego el de menor coste. El coste son milisegundos medidos de ajuste más predicción en una sola corrida.</p>
+      <div class="table-scroll" tabindex="0" role="region" aria-label="Tabla de detectores, desplazamiento horizontal disponible">
+        <table>
+          <caption class="sr-only">Resultados por detector en el escenario seleccionado</caption>
+          <thead><tr>
+            <th scope="col">Detector</th>
+            <th scope="col" class="numeric">Fugas detectadas</th>
+            <th scope="col" class="numeric">Horas hasta alertar</th>
+            <th scope="col" class="numeric">Falsas alarmas / día</th>
+            <th scope="col" class="numeric" id="th-exceso">Exceso no detectado</th>
+            <th scope="col" class="numeric">Coste · ms</th>
+          </tr></thead>
+          <tbody id="tabla-detectores"><tr><td colspan="6">Cargando…</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="resumen" class="panel det-resumen" aria-labelledby="resumen-titulo">
+      <div class="panel-heading">
+        <div><p class="eyebrow">RESUMEN DEL BARRIDO</p><h2 id="resumen-titulo">Detección según el tamaño de la fuga</h2></div>
+        <div class="segmented-control" role="group" aria-label="Versión de los datos">
+          <button type="button" class="active" data-version="normal" aria-pressed="true">Datos del kit</button>
+          <button type="button" data-version="dificil" aria-pressed="false">Datos difíciles</button>
+        </div>
+      </div>
+      <p class="panel-description" id="resumen-descripcion">Cargando el barrido…</p>
+      <p id="recomendacion" class="recomendacion"></p>
+      <div class="chart-wrap"><svg id="grafica-resumen" viewBox="0 0 720 300" role="img" aria-labelledby="resumen-svg-titulo"><title id="resumen-svg-titulo">Fracción de fugas detectadas por magnitud y detector</title></svg></div>
+      <div id="resumen-leyenda" class="chart-legend det-leyenda"></div>
+      <p id="resumen-meta" class="resumen-meta"></p>
+    </section>
+  </main>
+  <div id="demo-barra" class="demo-barra" role="region" aria-label="Demo guiada" hidden>
+    <div class="demo-progreso"><span id="demo-paso">Paso 1 de 5</span><span class="demo-pista"><span id="demo-avance"></span></span></div>
+    <p id="demo-texto" class="demo-texto" aria-live="polite"></p>
+    <button type="button" id="demo-detener" class="demo-detener">Detener</button>
+  </div>
+  <footer><span>ASYMPTOTIC · Construido sobre el kit CIFOX (licencia MIT)</span><span>DATOS SIMULADOS · Ejecución local · Sin acciones de control</span></footer>
+  <noscript><p class="error-panel">Activa JavaScript para usar esta página.</p></noscript>
+</body>
+</html>
