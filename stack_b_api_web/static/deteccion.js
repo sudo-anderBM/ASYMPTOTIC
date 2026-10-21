@@ -1,6 +1,6 @@
 "use strict";
 
-const USAR_EJEMPLO = true;
+const USAR_EJEMPLO = false;
 
 const $ = (id) => document.getElementById(id);
 
@@ -45,7 +45,8 @@ async function cargarEscenario() {
   try {
     const datos = await pedir("scenario", parametros(), controlador.signal);
     pintarTabla(datos); 
-    pintarGrafica(datos);          
+    pintarGrafica(datos);   
+    limpiarExplicacion();       
     $("estado").textContent = "Actualizado · Datos simulados";
   } catch (error) {
     if (error.name === "AbortError") return;   
@@ -286,6 +287,61 @@ function pintarLeyendaGrafica() {
     leyenda.append(item);
   }
 }
+
+
+let controladorExplicacion = null;
+
+function limpiarExplicacion() {
+  $("explicacion-contenido").hidden = true;
+  $("explicacion-vacia").hidden = false;
+}
+
+async function mostrarExplicacion(marca) {
+  // Resalta solo la marca elegida.
+  for (const m of document.querySelectorAll(".det-alerta.activa")) m.classList.remove("activa");
+  marca.classList.add("activa");
+
+  if (controladorExplicacion) controladorExplicacion.abort();
+  controladorExplicacion = new AbortController();
+
+  const timestamp = marca.dataset.timestamp;
+  const info = detectores.get(marca.dataset.detector);
+  const nombre = info ? info.nombre : marca.dataset.detector;
+
+  $("explicacion-vacia").hidden = true;
+  $("explicacion-contenido").hidden = false;
+  $("exp-fecha").textContent = "Cargando la explicación…";
+  for (const id of ["exp-observado", "exp-esperado", "exp-desviacion", "exp-texto"]) $(id).textContent = "";
+
+  try {
+    const e = await pedir("explain", { ...parametros(), timestamp }, controladorExplicacion.signal);
+    $("exp-fecha").textContent = `Alerta de ${nombre} · ${e.sitio} · ${formatoHora.format(new Date(e.timestamp))} UTC`;
+    $("exp-observado").textContent = `${numero(e.observado)} ${e.unidad}`;
+    $("exp-esperado").textContent = `${numero(e.esperado)} ${e.unidad}`;
+    $("exp-desviacion").textContent = e.desviacion_pct === null
+      ? "—"
+      : `${e.desviacion_pct > 0 ? "+" : ""}${numero(e.desviacion_pct)} %`;
+    $("exp-texto").textContent = `${e.texto} ${e.aviso}`;
+  } catch (error) {
+    if (error.name === "AbortError") return;
+    $("exp-fecha").textContent = `No se pudo cargar la explicación. ${error.message}`;
+  }
+}
+
+$("grafica").addEventListener("click", (evento) => {
+  const marca = evento.target.closest(".det-alerta");
+  if (marca) mostrarExplicacion(marca);
+});
+
+
+$("grafica").addEventListener("keydown", (evento) => {
+  if (evento.key !== "Enter" && evento.key !== " ") return;
+  const marca = evento.target.closest(".det-alerta");
+  if (!marca) return;
+  evento.preventDefault();          
+  mostrarExplicacion(marca);
+});
+
 function actualizarEtiquetaMagnitud() {
   $("magnitud-valor").textContent = `${$("magnitud").value} %`;
 }
