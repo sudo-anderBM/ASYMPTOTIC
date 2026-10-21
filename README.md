@@ -60,17 +60,36 @@ flowchart TD
 
 ### Residual-Based Detection
 
-The expected water consumption is estimated from operational variables. The difference between observed and expected measurements becomes the residual:
+The detector estimates expected water consumption from operational variables such as IT energy, workload, and temperature.
+
+The residual measures the difference between the observed and predicted values:
 
 \[
 r_t = y_t - \hat{y}_t
 \]
 
-The standardized residual is:
+Where:
+- \(y_t\): observed measurement.
+- \(\hat{y}_t\): expected measurement predicted by the model.
+- \(r_t\): residual, representing the deviation from expected behavior.
+
+To evaluate the magnitude of this deviation relative to normal model errors, the residual is standardized:
 
 \[
 z_t = \frac{r_t}{\sigma_r}
 \]
+
+Here, \(\sigma_r\) is the residual standard deviation estimated from the reference data.
+
+The **Residual 3σ detector** flags observations when the absolute standardized residual exceeds the configured threshold:
+
+\[
+|z_t| > 3
+\]
+
+The **CUSUM detector** complements this approach by accumulating deviations over time, helping identify persistent changes that may be difficult to detect from individual observations.
+
+Both methods are fitted using reference data only. Anomaly labels and scenario identifiers are excluded from detector inputs to prevent data leakage.
 
 A large deviation may indicate an anomaly. CUSUM complements this approach by accumulating evidence across observations.
 
