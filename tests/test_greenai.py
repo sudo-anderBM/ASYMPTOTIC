@@ -1,4 +1,4 @@
-from common.cifox import load_data, flagged, metrics
+﻿from common.cifox import load_data, flagged, metrics
 from greenai.detectors import ALL, RulesVec
 
 LABELS = ["scenario", "simulated_anomaly"]

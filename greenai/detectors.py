@@ -91,6 +91,27 @@ class _Residual(Detector):
                 z[mask, j] = r / self.sigma[(site, tgt)]
         return z
 
+    def esperado(self, df, variable):
+        """Valor esperado de `variable` por posicion, segun el ajuste en referencia."""
+        out = np.zeros(len(df))
+        for site in df["site_id"].unique():
+            m = (df["site_id"] == site).to_numpy()
+            g = df[m]
+            A = np.column_stack([np.ones(len(g)), g[TARGETS[variable]].to_numpy(float)])
+            out[m] = A @ self.beta[(site, variable)]
+        return out
+
+    def z(self, df, variable):
+        """z del residual de `variable`, por posicion."""
+        out = np.zeros(len(df))
+        for site in df["site_id"].unique():
+            m = (df["site_id"] == site).to_numpy()
+            g = df[m]
+            A = np.column_stack([np.ones(len(g)), g[TARGETS[variable]].to_numpy(float)])
+            r = g[variable].to_numpy(float) - A @ self.beta[(site, variable)]
+            out[m] = r / self.sigma[(site, variable)]
+        return out
+
 
 class ResidualSigma(_Residual):
     name = "3_residual_3sigma"
