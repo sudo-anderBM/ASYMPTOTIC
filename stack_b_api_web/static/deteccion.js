@@ -54,11 +54,6 @@ async function cargarEscenario() {
   }
 }
 
-$("modo").textContent = USAR_EJEMPLO
-  ? "Modo ejemplo: datos fijos (fuga 10 %, SIM-A, semilla 1); los controles aún no cambian el resultado."
-  : "";
-
-cargarEscenario();
 
 
 const detectores = new Map();
@@ -82,6 +77,43 @@ async function cargarDetectores() {
     console.log("detectores:", datos.detectores.map((d) => d.nombre));
   } catch (error) {
     $("error").textContent = `No se pudo cargar la lista de detectores. ${error.message}`;
-    cargarDetectores().then(cargarEscenario);
+    $("error").hidden = false;
   }
 }
+
+
+function actualizarEtiquetaMagnitud() {
+  $("magnitud-valor").textContent = `${$("magnitud").value} %`;
+}
+
+function semillaValida() {
+  const campo = $("semilla");
+  let valor = Math.round(Number(campo.value));
+  if (!Number.isFinite(valor) || valor < 1) valor = 1;
+  if (valor > 1000) valor = 1000;
+  campo.value = valor;
+}
+
+$("magnitud").addEventListener("input", actualizarEtiquetaMagnitud);
+
+$("magnitud").addEventListener("change", cargarEscenario);
+$("sitio").addEventListener("change", cargarEscenario);
+$("tipo").addEventListener("change", cargarEscenario);
+$("semilla").addEventListener("change", () => {
+  semillaValida();
+  cargarEscenario();
+});
+
+$("controles").addEventListener("submit", (evento) => {
+  evento.preventDefault();
+  semillaValida();
+  cargarEscenario();
+});
+
+
+$("modo").textContent = USAR_EJEMPLO
+  ? "Modo ejemplo: datos fijos (fuga 10 %, SIM-A, semilla 1); los controles aún no cambian el resultado."
+  : "";
+
+actualizarEtiquetaMagnitud();
+cargarDetectores().then(cargarEscenario);
