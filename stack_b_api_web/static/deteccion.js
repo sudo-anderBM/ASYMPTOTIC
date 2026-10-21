@@ -34,6 +34,7 @@ function parametros() {
 }
 
 let controlador = null;
+let ultimoEscenario = null;   // lo usa la demo guiada
 
 async function cargarEscenario() {
   if (controlador) controlador.abort();     
@@ -44,6 +45,7 @@ async function cargarEscenario() {
 
   try {
     const datos = await pedir("scenario", parametros(), controlador.signal);
+    ultimoEscenario = datos;
     pintarTabla(datos); 
     pintarGrafica(datos);
     pintarVeredicto(datos);   
@@ -241,8 +243,18 @@ function pintarGrafica(datos) {
     }
     return d;
   };
-  lienzo.append(svg("path", { d: trazo("esperado"), class: "det-esperado" }));
-  lienzo.append(svg("path", { d: trazo("observado"), class: "det-observado" }));
+  // Las dos líneas van dentro de un grupo recortado que se "revela" de izquierda a derecha.
+  const recorte = svg("clipPath", { id: "revelar-lineas" });
+  const ventana = svg("rect", { x: 0, y: 0, width: SIN_ANIMACION ? 720 : G.izq, height: altoTotal });
+  recorte.append(ventana);
+  const defs = svg("defs");
+  defs.append(recorte);
+  lienzo.append(defs);
+  const lineas = svg("g", { "clip-path": "url(#revelar-lineas)" });
+  lineas.append(svg("path", { d: trazo("esperado"), class: "det-esperado" }));
+  lineas.append(svg("path", { d: trazo("observado"), class: "det-observado" }));
+  lienzo.append(lineas);
+  revelar(ventana);
 
   datos.detectores.forEach((det, i) => {
     const info = detectores.get(det.id) || { nombre: det.id, color: "#66766e" };
@@ -256,6 +268,10 @@ function pintarGrafica(datos) {
         "aria-label": `Alerta de ${info.nombre}, ${formatoHora.format(new Date(ts))} UTC. Pulsa Enter para ver la explicación.`,
         "data-timestamp": ts, "data-detector": det.id,
       });
+      if (!SIN_ANIMACION) {
+        marca.classList.add("aparece");
+        marca.style.animationDelay = `${650 + i * 110}ms`;   // cada carril aparece un poco después
+      }
       marca.append(svg("title", {}, `${info.nombre} · ${formatoHora.format(new Date(ts))} UTC`));
       lienzo.append(marca);
     }
@@ -272,8 +288,9 @@ function pintarGrafica(datos) {
   const nombre = NOMBRES_VARIABLE[datos.variable] || datos.variable;
   $("grafica-descripcion").textContent =
     `${nombre[0].toUpperCase()}${nombre.slice(1)} por hora en ${datos.parametros.sitio} (${datos.unidad}), ${serie.length} horas en UTC. ` +
-    "Las franjas marcan dónde se inyectó el problema; debajo, cuándo avisó cada detector.";
+    "Las franjas marcan dónde se inyectó el problema; debajo, cuándo avisó cada detector. Pasa el mouse sobre la gráfica para ver cada hora.";
   pintarLeyendaGrafica();
+  prepararTooltip(lienzo, datos, x, y, t0, t1);
 }
 
 function pintarLeyendaGrafica() {
@@ -287,6 +304,109 @@ function pintarLeyendaGrafica() {
     item.append(marca, document.createTextNode(texto));
     leyenda.append(item);
   }
+}
+
+// ---------- Mejora 3 · Animación y tooltip de la gráfica ----------
+
+// Ensancha el rectángulo de recorte hasta mostrar las líneas completas (~0.9 s).
+function revelar(ventana) {
+  if (SIN_ANIMACION) return;
+  const inicio = performance.now();
+  const paso = (ahora) => {
+    const t = Math.min(1, (ahora - inicio) / 900);
+    const suave = 1 - Math.pow(1 - t, 3);
+    ventana.setAttribute("width", G.izq + suave * (720 - G.izq));
+    if (t < 1) requestAnimationFrame(paso);
+  };
+  requestAnimationFrame(paso);
+}
+
+// Al pasar el mouse por la zona de las líneas: guía vertical, dos puntos y una cajita con los datos de esa hora.
+function prepararTooltip(lienzo, datos, x, y, t0, t1) {
+  const serie = datos.serie;
+  const tip = $("grafica-tooltip");
+  tip.hidden = true;
+
+  // Qué detectores avisaron en cada hora.
+  const alertasPorHora = new Map();
+  for (const det of datos.detectores) {
+    const nombre = (detectores.get(det.id) || { nombre: det.id }).nombre;
+    for (const ts of det.alertas) {
+      if (!alertasPorHora.has(ts)) alertasPorHora.set(ts, []);
+      alertasPorHora.get(ts).push(nombre);
+    }
+  }
+  // ¿La hora cae dentro de un problema inyectado?
+  const enProblema = (ms) => datos.eventos_reales.some((ev) => ms >= Date.parse(ev.inicio) && ms <= Date.parse(ev.fin));
+
+  const guia = svg("line", { class: "det-guia", x1: 0, x2: 0, y1: G.arriba, y2: G.abajo, visibility: "hidden" });
+  const puntoEsp = svg("circle", { r: 3.5, class: "det-punto-esp", visibility: "hidden" });
+  const puntoObs = svg("circle", { r: 4.5, class: "det-punto-obs", visibility: "hidden" });
+  const zona = svg("rect", { x: G.izq, y: G.arriba, width: G.der - G.izq, height: G.abajo - G.arriba, class: "det-zona" });
+  lienzo.append(guia, puntoEsp, puntoObs, zona);
+
+  const fila = (etiqueta, valor) => {
+    const p = document.createElement("p");
+    const e = document.createElement("span");
+    e.textContent = etiqueta;
+    const v = document.createElement("strong");
+    v.textContent = valor;
+    p.append(e, v);
+    return p;
+  };
+
+  const ocultar = () => {
+    tip.hidden = true;
+    for (const el of [guia, puntoObs, puntoEsp]) el.setAttribute("visibility", "hidden");
+  };
+
+  const mover = (evento) => {
+    const caja = lienzo.getBoundingClientRect();
+    const vb = lienzo.viewBox.baseVal;
+    const sx = ((evento.clientX - caja.left) * vb.width) / caja.width;      // posición en unidades del dibujo
+    const ms = t0 + ((sx - G.izq) / (G.der - G.izq)) * (t1 - t0);
+    const i = Math.max(0, Math.min(serie.length - 1, Math.floor((ms - t0) / HORA_MS)));
+    const punto = serie[i];
+    const inicioHora = Date.parse(punto.timestamp);
+    const px = x(inicioHora + HORA_MS / 2);
+
+    guia.setAttribute("x1", px);
+    guia.setAttribute("x2", px);
+    guia.setAttribute("visibility", "visible");
+    for (const [circulo, valor] of [[puntoObs, punto.observado], [puntoEsp, punto.esperado]]) {
+      if (valor === null || valor === undefined) { circulo.setAttribute("visibility", "hidden"); continue; }
+      circulo.setAttribute("cx", px);
+      circulo.setAttribute("cy", y(valor));
+      circulo.setAttribute("visibility", "visible");
+    }
+
+    // Contenido de la cajita (siempre con textContent).
+    tip.replaceChildren();
+    const titulo = document.createElement("p");
+    titulo.className = "det-tooltip-titulo";
+    titulo.textContent = `${formatoHora.format(new Date(inicioHora))} UTC${enProblema(inicioHora) ? " · problema inyectado" : ""}`;
+    tip.append(titulo);
+    tip.append(fila("Observado", `${numero(punto.observado)} ${datos.unidad}`));
+    tip.append(fila("Esperado", `${numero(punto.esperado)} ${datos.unidad}`));
+    if (punto.esperado) {
+      const dif = ((punto.observado - punto.esperado) / punto.esperado) * 100;
+      tip.append(fila("Diferencia", `${dif > 0 ? "+" : ""}${numero(dif)} %`));
+    }
+    const quienes = alertasPorHora.get(punto.timestamp);
+    tip.append(fila("Alertas", quienes ? quienes.join(", ") : "ninguna"));
+
+    // Posición: a la derecha del punto, o a la izquierda si estamos cerca del borde.
+    const escalaX = caja.width / vb.width;
+    const escalaY = caja.height / vb.height;
+    tip.style.left = `${px * escalaX}px`;
+    tip.style.top = `${y(punto.observado ?? punto.esperado ?? 0) * escalaY}px`;
+    tip.classList.toggle("izq", px > 470);
+    tip.hidden = false;
+  };
+
+  zona.addEventListener("pointermove", mover);
+  zona.addEventListener("pointerdown", mover);      // en pantallas táctiles, al tocar
+  zona.addEventListener("pointerleave", ocultar);
 }
 
 
@@ -500,11 +620,9 @@ for (const boton of document.querySelectorAll("[data-version]")) {
 
 $("tipo").addEventListener("change", cargarResumen);
 
-// ---------- Mejora 2 · Veredicto del escenario ----------
 
 const SIN_ANIMACION = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-// Cuenta desde 0 hasta el valor final en ~0.6 s (o lo pone directo si el usuario pidió menos movimiento).
 function animarNumero(elemento, valor, formatear) {
   if (valor === null || valor === undefined || SIN_ANIMACION) {
     elemento.textContent = valor === null || valor === undefined ? "—" : formatear(valor);
@@ -514,14 +632,13 @@ function animarNumero(elemento, valor, formatear) {
   const duracion = 600;
   const paso = (ahora) => {
     const t = Math.min(1, (ahora - inicio) / duracion);
-    const suave = 1 - Math.pow(1 - t, 3);            // empieza rápido y frena al final
+    const suave = 1 - Math.pow(1 - t, 3);            
     elemento.textContent = formatear(valor * suave);
     if (t < 1) requestAnimationFrame(paso);
   };
   requestAnimationFrame(paso);
 }
 
-// Escribe una frase con partes en negrita sin usar innerHTML: [["texto normal"], ["texto", true], ...]
 function frase(elemento, partes) {
   elemento.replaceChildren();
   for (const [texto, negrita] of partes) {
@@ -547,7 +664,6 @@ function pintarVeredicto(datos) {
   const coste = (d) => d.fit_ms + d.pred_ms;
   const masCaro = datos.detectores.reduce((a, b) => (coste(b) > coste(a) ? b : a), datos.detectores[0]);
 
-  // 1) La frase principal.
   if (p.magnitud === 0) {
     frase($("veredicto-frase"), [["Sin problema inyectado en " + p.sitio + ": "], ["cualquier alerta aquí es una falsa alarma", true], ["."]]);
   } else if (mejor) {
@@ -566,7 +682,6 @@ function pintarVeredicto(datos) {
     ]);
   }
 
-  // Sin problema inyectado: las tarjetas muestran falsas alarmas, no "detectados".
   if (p.magnitud === 0) {
     const menosFalsas = datos.detectores.reduce((a, b) => (b.falsas_alarmas_dia < a.falsas_alarmas_dia ? b : a), datos.detectores[0]);
     $("v-reglas").textContent = reglas ? `${numero(reglas.falsas_alarmas_dia)} /día` : "—";
@@ -582,7 +697,7 @@ function pintarVeredicto(datos) {
     return;
   }
 
-  // 2) Tarjeta de las reglas del kit.
+
   if (reglas) {
     $("v-reglas").textContent = `${reglas.eventos_detectados} de ${reglas.eventos_totales}`;
     $("v-reglas-nota").textContent = reglas.eventos_detectados === 0
@@ -590,7 +705,7 @@ function pintarVeredicto(datos) {
       : `eventos vistos con umbrales fijos · ${numero(reglas.falsas_alarmas_dia)} falsas alarmas/día`;
   }
 
-  // 3) Tarjeta del mejor detector.
+  
   if (mejor) {
     $("v-mejor-nombre").textContent = `Mejor: ${nombreMejor}`;
     $("v-mejor").textContent = `${mejor.eventos_detectados} de ${mejor.eventos_totales}`;
@@ -601,14 +716,14 @@ function pintarVeredicto(datos) {
     $("v-mejor-nota").textContent = "ningún detector encontró todos los eventos";
   }
 
-  // 4) Tarjeta del exceso no detectado (agua o energía).
+  
   $("v-exceso-etiqueta").textContent = esFuga ? "Agua que pasó sin aviso (reglas)" : "Energía extra sin aviso (reglas)";
   animarNumero($("v-exceso"), reglas ? reglas.exceso_no_detectado : null, (v) => `${numero(v)} ${datos.unidad}`);
   $("v-exceso-nota").textContent = mejor
     ? `con ${nombreMejor}: ${numero(mejor.exceso_no_detectado)} ${datos.unidad}`
     : "ningún detector la cortó a tiempo en todos los eventos";
 
-  // 5) Tarjeta del cómputo.
+  
   if (mejor) {
     animarNumero($("v-coste"), coste(mejor), (v) => `${numero(v)} ms`);
     const veces = coste(masCaro) / Math.max(coste(mejor), 0.01);
@@ -631,6 +746,9 @@ function pintarVeredicto(datos) {
 
 function actualizarEtiquetaMagnitud() {
   $("magnitud-valor").textContent = `${$("magnitud").value} %`;
+  for (const boton of document.querySelectorAll(".atajo")) {
+    boton.classList.toggle("activo", boton.dataset.magnitud === $("magnitud").value);
+  }
 }
 
 function semillaValida() {
@@ -656,6 +774,146 @@ $("controles").addEventListener("submit", (evento) => {
   semillaValida();
   cargarEscenario();
 });
+
+
+for (const boton of document.querySelectorAll(".atajo")) {
+  boton.addEventListener("click", () => {
+    $("magnitud").value = boton.dataset.magnitud;
+    actualizarEtiquetaMagnitud();
+    cargarEscenario();
+  });
+}
+
+async function fijarEscenario({ sitio, tipo, magnitud, semilla }) {
+  const cambiaTipo = tipo !== undefined && tipo !== $("tipo").value;
+  if (sitio !== undefined) $("sitio").value = sitio;
+  if (tipo !== undefined) $("tipo").value = tipo;
+  if (magnitud !== undefined) $("magnitud").value = magnitud;
+  if (semilla !== undefined) $("semilla").value = semilla;
+  actualizarEtiquetaMagnitud();
+  if (cambiaTipo) cargarResumen();
+  await cargarEscenario();
+}
+
+const demo = { activa: false, turno: 0 };
+const PASOS_DEMO = 5;
+
+function esperar(ms) {
+  const turno = demo.turno;
+  return new Promise((resolver, rechazar) => {
+    setTimeout(() => (turno === demo.turno && demo.activa ? resolver() : rechazar(new Error("demo-detenida"))), ms);
+  });
+}
+
+function desplazarA(elemento) {
+  elemento.scrollIntoView({ behavior: SIN_ANIMACION ? "auto" : "smooth", block: "start" });
+}
+
+function subtitulo(paso, texto) {
+  $("demo-paso").textContent = `Paso ${paso} de ${PASOS_DEMO}`;
+  $("demo-avance").style.width = `${(paso / PASOS_DEMO) * 100}%`;
+  $("demo-texto").textContent = texto;
+}
+
+function minuscula(texto) {
+  return texto ? texto[0].toLowerCase() + texto.slice(1) : texto;
+}
+
+function nombreDetector(id) {
+  return (detectores.get(id) || { nombre: id }).nombre;
+}
+
+async function reproducirDemo() {
+  if (demo.activa) return;
+  demo.activa = true;
+  demo.turno += 1;
+  document.body.classList.add("demo-en-curso");
+  $("demo-barra").hidden = false;
+  $("demo-iniciar").disabled = true;
+  const de = (d) => `${d.eventos_detectados} de ${d.eventos_totales}`;
+
+  try {
+   
+    subtitulo(1, "Operación normal en SIM-A: la línea real (sólida) sigue a la esperada (punteada). Todavía no hay ninguna fuga.");
+    await fijarEscenario({ sitio: "SIM-A", tipo: "fuga", magnitud: 0, semilla: 1 });
+    desplazarA($("veredicto"));
+    await esperar(6500);
+
+   
+    await fijarEscenario({ magnitud: 10 });
+    let e = ultimoEscenario;
+    const reglas = e.detectores.find((d) => d.id === "1_reglas");
+    const idMejor = elegirMejor(e.detectores);
+    const mejor = e.detectores.find((d) => d.id === idMejor);
+    subtitulo(2, mejor
+      ? `Inyectamos una fuga del 10 % (franjas naranjas). Las reglas del kit detectan ${de(reglas)}; ${nombreDetector(mejor.id)} detecta ${de(mejor)} y deja pasar ${numero(mejor.exceso_no_detectado)} ${e.unidad} en lugar de ${numero(reglas.exceso_no_detectado)} ${e.unidad}.`
+      : `Inyectamos una fuga del 10 % (franjas naranjas). Las reglas del kit detectan ${de(reglas)}, y ningún detector ve todos los eventos.`);
+    desplazarA($("grafica-titulo"));    
+    await esperar(8500);
+
+    
+    const marca = mejor && document.querySelector(`.det-alerta[data-detector="${mejor.id}"]`);
+    if (marca) {
+      desplazarA($("grafica-titulo"));
+      await mostrarExplicacion(marca);
+      subtitulo(3, `¿Por qué sonó? ${$("exp-texto").textContent}`);
+    } else {
+      subtitulo(3, "Cada alerta se puede abrir para ver lo observado frente a lo esperado por el modelo.");
+    }
+    await esperar(8500);
+
+    await fijarEscenario({ magnitud: 30 });
+    e = ultimoEscenario;
+    const completos = e.detectores.filter((d) => d.eventos_totales > 0 && d.eventos_detectados === d.eventos_totales).length;
+    const iforest = e.detectores.find((d) => d.id === "2_isolation_forest");
+    const mejor30 = e.detectores.find((d) => d.id === elegirMejor(e.detectores));
+    const coste = (d) => d.fit_ms + d.pred_ms;
+    let texto4 = `Con una fuga del 30 %, ${completos} de ${e.detectores.length} detectores ven todos los eventos.`;
+    if (iforest && mejor30 && mejor30.id !== iforest.id) {
+      texto4 += ` IsolationForest da ${numero(iforest.falsas_alarmas_dia)} falsas alarmas al día y cuesta ${numero(coste(iforest) / Math.max(coste(mejor30), 0.01))}× más cómputo que ${nombreDetector(mejor30.id)}.`;
+    }
+    subtitulo(4, texto4);
+    desplazarA($("veredicto"));
+    await esperar(8500);
+
+    
+    desplazarA($("resumen"));
+    document.querySelector('[data-version="normal"]').click();
+    await esperar(900);
+    subtitulo(5, `Con ${resumen.datos ? resumen.datos.meta.eventos_por_punto : "muchos"} eventos por punto, ${minuscula($("recomendacion").textContent)}`);
+    await esperar(8000);
+    document.querySelector('[data-version="dificil"]').click();
+    subtitulo(5, `Con datos difíciles (ruido y relación no lineal): ${minuscula($("recomendacion").textContent)}`);
+    await esperar(8000);
+
+    $("demo-texto").textContent = "Fin de la demo. Ahora puedes mover los controles.";
+    await esperar(3500);
+    terminarDemo();
+  } catch (error) {
+    if (error.message !== "demo-detenida") {
+      $("demo-texto").textContent = `La demo se detuvo: ${error.message}`;
+    }
+  }
+}
+
+function terminarDemo() {
+  demo.activa = false;
+  demo.turno += 1;               
+  document.body.classList.remove("demo-en-curso");
+  $("demo-barra").hidden = true;
+  $("demo-iniciar").disabled = false;
+}
+
+$("demo-iniciar").addEventListener("click", reproducirDemo);
+$("demo-detener").addEventListener("click", terminarDemo);
+document.addEventListener("keydown", (evento) => {
+  if (evento.key === "Escape" && demo.activa) terminarDemo();
+});
+for (const tipoEvento of ["pointerdown", "keydown"]) {
+  $("controles").addEventListener(tipoEvento, (evento) => {
+    if (demo.activa && evento.isTrusted) terminarDemo();
+  });
+}
 
 
 $("modo").textContent = USAR_EJEMPLO

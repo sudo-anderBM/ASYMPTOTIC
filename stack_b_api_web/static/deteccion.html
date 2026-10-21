@@ -37,6 +37,9 @@
       <h1 id="page-title">¿Qué detector ve una fuga pequeña<span class="orange">?</span></h1>
       <p class="asy-lema">Matemáticas × Física × IA × Eficiencia computacional</p>
       <p class="hero-description">Inyectamos una fuga de tamaño controlado en un centro de datos simulado y comparamos cinco detectores: cuántas fugas encuentran, cuánto tardan, cuántas falsas alarmas dan y cuánto cómputo gastan.</p>
+      <div class="demo-acciones">
+        <button type="button" id="demo-iniciar" class="primary-button demo-boton"><span aria-hidden="true">▶</span> Reproducir demo guiada</button>
+      </div>
     </section>
 
     <section class="filter-panel" aria-labelledby="controles-titulo">
@@ -54,7 +57,13 @@
             <option value="ineficiencia">Gasto extra de energía</option>
           </select></div>
         <div class="field field-wide"><label for="magnitud">Tamaño del problema: <output id="magnitud-valor" for="magnitud">10 %</output></label>
-          <input id="magnitud" name="magnitud" type="range" min="0" max="100" step="5" value="10"></div>
+          <input id="magnitud" name="magnitud" type="range" min="0" max="100" step="5" value="10">
+          <div class="atajos" role="group" aria-label="Tamaños rápidos">
+            <button type="button" class="atajo" data-magnitud="0">Sin problema</button>
+            <button type="button" class="atajo activo" data-magnitud="10">Pequeño · 10 %</button>
+            <button type="button" class="atajo" data-magnitud="30">Mediano · 30 %</button>
+            <button type="button" class="atajo" data-magnitud="100">Grande · 100 %</button>
+          </div></div>
         <div class="field field-small"><label for="semilla">Semilla</label>
           <input id="semilla" name="semilla" type="number" min="1" max="1000" step="1" value="1" inputmode="numeric"></div>
       </form>
@@ -93,7 +102,7 @@
       <section class="panel" aria-labelledby="grafica-titulo">
         <div class="panel-heading"><div><p class="eyebrow">LA PRUEBA</p><h2 id="grafica-titulo">Observado frente a esperado</h2></div></div>
         <p class="panel-description" id="grafica-descripcion">Cargando la serie…</p>
-        <div class="chart-wrap"><svg id="grafica" viewBox="0 0 720 400" role="img" aria-labelledby="grafica-svg-titulo"><title id="grafica-svg-titulo">Serie horaria con alertas por detector</title></svg></div>
+        <div class="chart-wrap det-chart"><svg id="grafica" viewBox="0 0 720 400" role="img" aria-labelledby="grafica-svg-titulo"><title id="grafica-svg-titulo">Serie horaria con alertas por detector</title></svg><div id="grafica-tooltip" class="det-tooltip" hidden></div></div>
         <div id="grafica-leyenda" class="chart-legend det-leyenda"></div>
       </section>
 
@@ -149,6 +158,11 @@
       <p id="resumen-meta" class="resumen-meta"></p>
     </section>
   </main>
+  <div id="demo-barra" class="demo-barra" role="region" aria-label="Demo guiada" hidden>
+    <div class="demo-progreso"><span id="demo-paso">Paso 1 de 5</span><span class="demo-pista"><span id="demo-avance"></span></span></div>
+    <p id="demo-texto" class="demo-texto" aria-live="polite"></p>
+    <button type="button" id="demo-detener" class="demo-detener">Detener</button>
+  </div>
   <footer><span>ASYMPTOTIC · Construido sobre el kit CIFOX (licencia MIT)</span><span>DATOS SIMULADOS · Ejecución local · Sin acciones de control</span></footer>
   <noscript><p class="error-panel">Activa JavaScript para usar esta página.</p></noscript>
 </body>

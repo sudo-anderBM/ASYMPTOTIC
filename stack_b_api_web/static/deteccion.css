@@ -96,3 +96,39 @@ tr.mejor:hover{background:#e1eee5}
 @media(prefers-reduced-motion:reduce){.v-tarjeta.v-actualizado{animation:none}}
 @media(max-width:1000px){.v-tarjetas{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:520px){.v-tarjetas{grid-template-columns:1fr}.veredicto{padding:20px}}
+
+/* Mejora 3: gráfica animada y tooltip */
+.det-chart{position:relative}
+.det-zona{fill:transparent;cursor:crosshair}
+.det-guia{stroke:var(--ink);stroke-width:1;stroke-dasharray:3 3;opacity:.55;pointer-events:none}
+.det-punto-obs{fill:var(--ink);stroke:#fff;stroke-width:1.5;pointer-events:none}
+.det-punto-esp{fill:#fff;stroke:var(--green);stroke-width:1.5;pointer-events:none}
+.det-alerta.aparece{animation:det-aparecer .35s ease-out both;transform-box:fill-box;transform-origin:center}
+@keyframes det-aparecer{from{opacity:0;transform:scaleY(.2)}to{opacity:1;transform:none}}
+.det-tooltip{position:absolute;z-index:2;pointer-events:none;min-width:190px;background:var(--ink);color:#fff;border-radius:10px;padding:10px 12px;font-size:11px;line-height:1.45;box-shadow:0 8px 24px rgba(23,59,57,.25);transform:translate(16px,-50%)}
+.det-tooltip.izq{transform:translate(calc(-100% - 16px),-50%)}
+.det-tooltip p{margin:0;display:flex;justify-content:space-between;gap:14px}
+.det-tooltip p span{color:#c7d8cf}
+.det-tooltip strong{font-variant-numeric:tabular-nums;font-weight:650}
+.det-tooltip .det-tooltip-titulo{display:block;color:#ebb17b;font-weight:650;margin-bottom:5px}
+@media(prefers-reduced-motion:reduce){.det-alerta.aparece{animation:none}}
+
+/* Mejora 4: botones rápidos y demo guiada */
+.demo-acciones{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:20px}
+.demo-boton{font-size:13px;padding:11px 18px;background:var(--green)}
+.demo-boton:hover:not(:disabled){background:var(--ink)}
+.demo-ayuda{font-size:11px;color:var(--muted)}
+.atajos{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.atajo{border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:999px;padding:4px 10px;font-size:10.5px;min-height:28px}
+.atajo:hover:not(:disabled){background:var(--mint)}
+.atajo.activo{background:var(--ink);border-color:var(--ink);color:#fff}
+.demo-barra{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:20;width:min(860px,calc(100% - 32px));background:var(--ink);color:#fff;border-radius:16px;padding:14px 16px 14px 20px;display:grid;grid-template-columns:auto 1fr auto;gap:6px 18px;align-items:center;box-shadow:0 14px 40px rgba(23,59,57,.35)}
+.demo-progreso{display:flex;flex-direction:column;gap:6px;font-size:10px;font-weight:700;letter-spacing:1px;color:#ebb17b;text-transform:uppercase;white-space:nowrap}
+.demo-pista{display:block;width:90px;height:4px;border-radius:4px;background:#2f625d;overflow:hidden}
+.demo-pista span{display:block;height:100%;width:0;background:#ebb17b;transition:width .4s}
+.demo-texto{margin:0;font-size:14px;line-height:1.5}
+.demo-detener{border:1px solid #476863;background:transparent;color:#fff;border-radius:8px;padding:8px 12px;font-size:12px}
+.demo-detener:hover{background:#21504c}
+.det-alerta.activa{stroke:#ebb17b;stroke-width:3}
+body.demo-en-curso .filter-panel{outline:2px solid #ebb17b;outline-offset:4px;border-radius:13px}
+@media(max-width:700px){.demo-barra{grid-template-columns:1fr;bottom:10px}.demo-texto{font-size:13px}}
