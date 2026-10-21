@@ -20,6 +20,7 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 from common.cifox import flagged, load_data, metrics  # noqa: E402
+from greenai import service  # noqa: E402
 
 STATIC = Path(__file__).resolve().parent / "static"
 DATA_FILE = ROOT / "data" / "operaciones_simuladas.csv"
@@ -151,3 +152,51 @@ def get_records(
     # pandas serializa correctamente las fechas, los booleanos y los valores nulos.
     records = json.loads(selected.head(limit).to_json(orient="records", date_format="iso"))
     return {"simulated": True, "total": len(selected), "returned": len(records), "records": records}
+
+
+# ---------------------------------------------------------------------------
+# Deteccion de fugas e ineficiencias (nuestro aporte; el resto es del kit)
+# Parametros como str y validacion manual: asi `detail` siempre es texto.
+# ---------------------------------------------------------------------------
+def _422(fn, *args):
+    try:
+        return _safe(fn(*args))
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from None
+
+
+@app.get("/api/detectors")
+def api_detectors():
+    return {"simulated": True, "detectores": service.DETECTORES}
+
+
+@app.get("/api/scenario")
+def api_scenario(
+    tipo: str | None = Query(default=None, max_length=40),
+    magnitud: str | None = Query(default=None, max_length=20),
+    sitio: str | None = Query(default=None, max_length=40),
+    semilla: str | None = Query(default=None, max_length=20),
+):
+    return _422(service.escenario, tipo, magnitud, sitio, semilla)
+
+
+@app.get("/api/explain")
+def api_explain(
+    tipo: str | None = Query(default=None, max_length=40),
+    magnitud: str | None = Query(default=None, max_length=20),
+    sitio: str | None = Query(default=None, max_length=40),
+    semilla: str | None = Query(default=None, max_length=20),
+    timestamp: str | None = Query(default=None, max_length=40),
+):
+    return _422(service.explicacion, tipo, magnitud, sitio, semilla, timestamp)
+
+
+
+@app.get("/api/sweep")
+def api_sweep(tipo: str | None = Query(default=None, max_length=40)):
+    try:
+        return _422(service.barrido, tipo)
+    except FileNotFoundError:
+        raise HTTPException(
+            status_code=503, detail="Falta ejecutar python -m greenai.sweep"
+        ) from None
