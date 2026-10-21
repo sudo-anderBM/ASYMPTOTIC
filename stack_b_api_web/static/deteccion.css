@@ -45,7 +45,6 @@ tr.mejor:hover{background:#e1eee5}
 .recomendacion{font-size:14px;line-height:1.6;margin:4px 0 0;padding:12px 14px;background:#eef3ef;border-radius:10px}
 .resumen-meta{font-size:10px;color:var(--muted);margin:14px 0 0}
 
-/* SVG */
 .det-svg-texto{fill:#66766e;font-family:Inter,"Segoe UI",Arial,sans-serif;font-size:10px}
 .det-svg-carril{fill:var(--ink);font-family:Inter,"Segoe UI",Arial,sans-serif;font-size:10.5px}
 .det-svg-unidad{fill:#66766e;font-family:Inter,"Segoe UI",Arial,sans-serif;font-size:10px;font-weight:600}
@@ -68,3 +67,8 @@ tr.mejor:hover{background:#e1eee5}
   .det-resumen .panel-heading{flex-direction:column;align-items:flex-start}
 }
 @media(max-width:520px){.det-controles{grid-template-columns:1fr}.field-small{min-width:0}}
+
+
+.det-leyenda .leyenda-linea{width:18px;height:0;border-radius:0;border-top:2px solid var(--ink)}
+.det-leyenda .leyenda-linea.punteada{border-top:2px dashed var(--green)}
+.det-leyenda .leyenda-banda{width:14px;height:10px;border-radius:2px;background:var(--orange-soft);border:1px solid #e8d3bc}

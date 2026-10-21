@@ -44,7 +44,8 @@ async function cargarEscenario() {
 
   try {
     const datos = await pedir("scenario", parametros(), controlador.signal);
-    pintarTabla(datos);           
+    pintarTabla(datos); 
+    pintarGrafica(datos);          
     $("estado").textContent = "Actualizado · Datos simulados";
   } catch (error) {
     if (error.name === "AbortError") return;   
@@ -85,13 +86,12 @@ async function cargarDetectores() {
 
 const formato1 = new Intl.NumberFormat("es-MX", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 
-// null o undefined se muestran como "—"; los números con 1 decimal.
+
 function numero(valor) {
   return valor === null || valor === undefined ? "—" : formato1.format(valor);
 }
 
-// El mejor: detectó todos los eventos; luego menos falsas alarmas,
-// luego menos exceso no detectado (agua o energía perdida) y, al final, menos coste.
+
 function elegirMejor(lista) {
   const completos = lista.filter((d) => d.eventos_totales > 0 && d.eventos_detectados === d.eventos_totales);
   if (completos.length === 0) return null;
@@ -161,7 +161,131 @@ function pintarTabla(datos) {
     cuerpo.append(fila);
   }
 }
+//  Gráfica
 
+const G = {
+  izq: 118, der: 700,          
+  arriba: 28, abajo: 200,      
+  carrilInicio: 228, carrilAlto: 26,
+};
+const HORA_MS = 3600 * 1000;
+const NOMBRES_VARIABLE = { water_l: "agua", energy_total_kwh: "energía total" };
+
+function svg(etiqueta, atributos = {}, texto) {
+  const nodo = document.createElementNS("http://www.w3.org/2000/svg", etiqueta);
+  for (const [clave, valor] of Object.entries(atributos)) nodo.setAttribute(clave, String(valor));
+  if (texto !== undefined) nodo.textContent = texto;
+  return nodo;
+}
+
+const formatoHora = new Intl.DateTimeFormat("es-MX", {
+  day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", hourCycle: "h23", timeZone: "UTC",
+});
+
+function pintarGrafica(datos) {
+  const lienzo = $("grafica");
+  lienzo.replaceChildren();
+  const serie = datos.serie;
+  const nCarriles = datos.detectores.length;
+  const altoTotal = G.carrilInicio + nCarriles * G.carrilAlto + 40;
+  lienzo.setAttribute("viewBox", `0 0 720 ${altoTotal}`);
+  lienzo.append(svg("title", { id: "grafica-svg-titulo" }, `Serie horaria de ${NOMBRES_VARIABLE[datos.variable] || datos.variable} con alertas por detector`));
+
+  if (serie.length === 0) {
+    lienzo.append(svg("text", { x: 360, y: 110, "text-anchor": "middle", class: "det-svg-texto" }, "Sin datos para este escenario"));
+    return;
+  }
+
+ 
+  const t0 = Date.parse(serie[0].timestamp);
+  const t1 = Date.parse(serie[serie.length - 1].timestamp) + HORA_MS;   
+  const x = (ms) => G.izq + ((ms - t0) / (t1 - t0)) * (G.der - G.izq);
+  const anchoHora = (G.der - G.izq) / ((t1 - t0) / HORA_MS);
+
+  
+  const valores = serie.flatMap((p) => [p.observado, p.esperado]).filter((v) => v !== null && v !== undefined);
+  let min = Math.min(...valores), max = Math.max(...valores);
+  if (min === max) { min -= 1; max += 1; }           
+  const margen = (max - min) * 0.1;
+  min -= margen; max += margen;
+  const y = (v) => G.abajo - ((v - min) / (max - min)) * (G.abajo - G.arriba);
+  const fondoCarriles = G.carrilInicio + nCarriles * G.carrilAlto;
+
+  
+  for (const ev of datos.eventos_reales) {
+    const xa = x(Date.parse(ev.inicio));
+    const xb = x(Date.parse(ev.fin) + HORA_MS);
+    lienzo.append(svg("rect", { x: xa, y: G.arriba, width: xb - xa, height: G.abajo - G.arriba, class: "det-banda" }));
+    lienzo.append(svg("rect", { x: xa, y: G.carrilInicio, width: xb - xa, height: fondoCarriles - G.carrilInicio, class: "det-banda-carril" }));
+  }
+
+
+  for (let i = 0; i <= 4; i++) {
+    const v = min + ((max - min) * i) / 4;
+    lienzo.append(svg("line", { x1: G.izq, x2: G.der, y1: y(v), y2: y(v), class: "chart-gridline" }));
+    lienzo.append(svg("text", { x: G.izq - 8, y: y(v) + 3, "text-anchor": "end", class: "det-svg-texto" }, formato1.format(v)));
+  }
+  lienzo.append(svg("text", { x: G.izq - 8, y: G.arriba - 12, "text-anchor": "end", class: "det-svg-unidad" }, datos.unidad));
+
+  
+  const trazo = (campo) => {
+    let d = "", nuevo = true;
+    for (const p of serie) {
+      const v = p[campo];
+      if (v === null || v === undefined) { nuevo = true; continue; }
+      const px = x(Date.parse(p.timestamp) + HORA_MS / 2);   // centro de la hora
+      d += `${nuevo ? "M" : "L"}${px.toFixed(1)} ${y(v).toFixed(1)}`;
+      nuevo = false;
+    }
+    return d;
+  };
+  lienzo.append(svg("path", { d: trazo("esperado"), class: "det-esperado" }));
+  lienzo.append(svg("path", { d: trazo("observado"), class: "det-observado" }));
+
+  datos.detectores.forEach((det, i) => {
+    const info = detectores.get(det.id) || { nombre: det.id, color: "#66766e" };
+    const yc = G.carrilInicio + i * G.carrilAlto + G.carrilAlto / 2;
+    lienzo.append(svg("line", { x1: G.izq, x2: G.der, y1: yc, y2: yc, class: "chart-gridline" }));
+    lienzo.append(svg("text", { x: G.izq - 8, y: yc + 4, "text-anchor": "end", class: "det-svg-carril" }, info.nombre));
+    for (const ts of det.alertas) {
+      const marca = svg("rect", {
+        x: x(Date.parse(ts)) + 1, y: yc - 7, width: Math.max(3, anchoHora - 2), height: 14, rx: 2,
+        fill: info.color, class: "det-alerta", tabindex: 0, role: "button",
+        "aria-label": `Alerta de ${info.nombre}, ${formatoHora.format(new Date(ts))} UTC. Pulsa Enter para ver la explicación.`,
+        "data-timestamp": ts, "data-detector": det.id,
+      });
+      marca.append(svg("title", {}, `${info.nombre} · ${formatoHora.format(new Date(ts))} UTC`));
+      lienzo.append(marca);
+    }
+  });
+
+  const horas = (t1 - t0) / HORA_MS;
+  const paso = (horas <= 48 ? 6 : 12) * HORA_MS;
+  for (let t = Math.ceil(t0 / paso) * paso; t <= t1; t += paso) {
+    lienzo.append(svg("line", { x1: x(t), x2: x(t), y1: G.abajo, y2: G.abajo + 4, class: "chart-gridline" }));
+    lienzo.append(svg("text", { x: x(t), y: fondoCarriles + 18, "text-anchor": "middle", class: "det-svg-texto" }, formatoHora.format(new Date(t))));
+  }
+
+  
+  const nombre = NOMBRES_VARIABLE[datos.variable] || datos.variable;
+  $("grafica-descripcion").textContent =
+    `${nombre[0].toUpperCase()}${nombre.slice(1)} por hora en ${datos.parametros.sitio} (${datos.unidad}), ${serie.length} horas en UTC. ` +
+    "Las franjas marcan dónde se inyectó el problema; debajo, cuándo avisó cada detector.";
+  pintarLeyendaGrafica();
+}
+
+function pintarLeyendaGrafica() {
+  const leyenda = $("grafica-leyenda");
+  leyenda.replaceChildren();
+  for (const [clase, texto] of [["leyenda-linea", "Observado"], ["leyenda-linea punteada", "Esperado (modelo residual)"], ["leyenda-banda", "Problema inyectado"]]) {
+    const item = document.createElement("span");
+    const marca = document.createElement("i");
+    marca.className = clase;
+    marca.setAttribute("aria-hidden", "true");
+    item.append(marca, document.createTextNode(texto));
+    leyenda.append(item);
+  }
+}
 function actualizarEtiquetaMagnitud() {
   $("magnitud-valor").textContent = `${$("magnitud").value} %`;
 }
