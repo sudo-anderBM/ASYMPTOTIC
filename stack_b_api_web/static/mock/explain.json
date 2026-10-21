@@ -1,0 +1,15 @@
+{
+  "simulated": true,
+  "timestamp": "2026-10-15T14:00:00Z",
+  "sitio": "SIM-A",
+  "variable": "water_l",
+  "unidad": "L",
+  "observado": 4.43,
+  "esperado": 4.02,
+  "desviacion_pct": 10.2,
+  "z": 6.8,
+  "carga_pct": 71.3,
+  "temp_exterior_c": 28.4,
+  "texto": "Agua 10.2 % por encima de lo esperado para 71 % de carga y 28.4 °C.",
+  "aviso": "Señal para revisión humana; no es un diagnóstico."
+}
