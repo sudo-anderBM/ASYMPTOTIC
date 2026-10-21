@@ -72,3 +72,7 @@ tr.mejor:hover{background:#e1eee5}
 .det-leyenda .leyenda-linea{width:18px;height:0;border-radius:0;border-top:2px solid var(--ink)}
 .det-leyenda .leyenda-linea.punteada{border-top:2px dashed var(--green)}
 .det-leyenda .leyenda-banda{width:14px;height:10px;border-radius:2px;background:var(--orange-soft);border:1px solid #e8d3bc}
+
+.asy-mark{display:block;width:44px;height:44px;flex:none}
+.asy-mark svg{width:100%;height:100%;display:block}
+.asy-lema{margin:-4px 0 14px;font-size:12px;font-weight:650;letter-spacing:1.2px;color:var(--green);text-transform:uppercase}
