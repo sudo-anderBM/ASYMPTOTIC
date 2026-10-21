@@ -58,33 +58,75 @@ flowchart TD
 | Residual CUSUM | Cumulative residual monitoring | Detect persistent small deviations |
 | Z-Score | Statistical standardization | Lightweight anomaly detection |
 
-### Residual-Based Detection
+## Residual-Based Detection
 
 The detector estimates expected water consumption from operational variables such as IT energy, workload, and temperature.
 
-The residual measures the difference between the observed and predicted values:
+### Residual
 
-\[
+Given an observed measurement $y_t$ and the model prediction $\hat{y}_t = f(\mathbf{x}_t)$, where $\mathbf{x}_t$ is the vector of operational variables at time $t$, the residual is:
+
+$$
 r_t = y_t - \hat{y}_t
-\]
+$$
 
 Where:
-- \(y_t\): observed measurement.
-- \(\hat{y}_t\): expected measurement predicted by the model.
-- \(r_t\): residual, representing the deviation from expected behavior.
 
-To evaluate the magnitude of this deviation relative to normal model errors, the residual is standardized:
+- $y_t$: observed measurement.
+- $\hat{y}_t$: expected measurement predicted by the model.
+- $r_t$: residual, representing the deviation from expected behavior.
 
-\[
-z_t = \frac{r_t}{\sigma_r}
-\]
+### Standardization
 
-Here, \(\sigma_r\) is the residual standard deviation estimated from the reference data.
+To evaluate the magnitude of the deviation relative to normal model errors, the residual is standardized:
 
-The **Residual 3σ detector** flags observations when the absolute standardized residual exceeds the configured threshold:
+$$
+z_t = \frac{r_t - \mu_r}{\sigma_r}
+$$
 
-\[
-|z_t| > 3
+where $\mu_r$ and $\sigma_r$ are the mean and standard deviation of the residuals on the reference data $\mathcal{D}_{\text{ref}}$ with $N$ samples:
+
+$$
+\mu_r = \frac{1}{N}\sum_{i=1}^{N} r_i,
+\qquad
+\sigma_r = \sqrt{\frac{1}{N-1}\sum_{i=1}^{N}\left(r_i - \mu_r\right)^2}
+$$
+
+### Residual 3σ Detector
+
+An observation is flagged as anomalous when the absolute standardized residual exceeds the threshold:
+
+$$
+\text{alarm}_t =
+\begin{cases}
+1 & \text{if } |z_t| > 3 \\
+0 & \text{otherwise}
+\end{cases}
+$$
+
+### CUSUM Detector
+
+The **CUSUM detector** accumulates deviations over time, which helps identify persistent changes that are hard to detect from individual observations:
+
+$$
+S_t^{+} = \max\left(0,\; S_{t-1}^{+} + z_t - k\right)
+$$
+
+$$
+S_t^{-} = \max\left(0,\; S_{t-1}^{-} - z_t - k\right)
+$$
+
+with $S_0^{+} = S_0^{-} = 0$, where $k$ is the allowance (slack) parameter. An alarm is raised when:
+
+$$
+S_t^{+} > h \quad \text{or} \quad S_t^{-} > h
+$$
+
+where $h$ is the decision threshold.
+
+### Data Leakage Prevention
+
+Both methods are fitted using reference data only. Anomaly labels and scenario identifiers are excluded from detector inputs to prevent data leakage.
 \]
 
 The **CUSUM detector** complements this approach by accumulating deviations over time, helping identify persistent changes that may be difficult to detect from individual observations.
