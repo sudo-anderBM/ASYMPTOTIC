@@ -1,0 +1,70 @@
+/* Estilos de la página de detección. Se apoya en style.css del kit. */
+.aviso-simulado{max-width:1440px;margin:0 auto;padding:10px 5.6%;background:var(--orange-soft);color:#814719;font-size:12px;border-bottom:1px solid #e8d3bc}
+.aviso-simulado strong{letter-spacing:1px;margin-right:4px}
+.stack-label{text-decoration:none}
+.det-hero{padding:36px 0 26px;max-width:820px}
+.det-hero h1{font-size:clamp(30px,3.2vw,44px);margin-bottom:14px}
+.det-hero .hero-description{max-width:680px}
+
+.det-controles{align-items:flex-end}
+.field-wide{flex:1.4}
+.field-small{flex:.45;min-width:80px}
+.field output{color:var(--ink);font-weight:700}
+input[type=number]{border:1px solid var(--line);border-radius:6px;background:#fff;color:var(--ink);padding:9px 10px;width:100%;font-size:12px;min-height:38px}
+input[type=range]{width:100%;accent-color:var(--green);min-height:38px}
+
+#modo{color:#814719;font-weight:600}
+
+.det-grid{display:grid;grid-template-columns:minmax(0,2.65fr) minmax(250px,1fr);gap:18px}
+.det-explicacion{justify-content:flex-start}
+.det-explicacion h2{margin-top:2px}
+.det-explicacion>p{margin-top:8px}
+.exp-fecha{font-size:11px;color:#b8cec2;margin:14px 0 6px}
+.exp-datos{margin:0;display:grid;gap:8px}
+.exp-datos div{display:flex;justify-content:space-between;gap:12px;border-bottom:1px solid #476863;padding-bottom:6px}
+.exp-datos dt{font-size:11px;color:#c7d8cf}
+.exp-datos dd{margin:0;font-size:15px;font-weight:600;font-variant-numeric:tabular-nums}
+.exp-texto{font-size:13px;line-height:1.6;color:#fff;margin:14px 0 0}
+
+.det-leyenda{flex-wrap:wrap;gap:8px 18px;margin-top:8px}
+.det-leyenda i{width:10px;height:10px;border-radius:50%}
+.leyenda-linea{display:inline-block;width:18px;height:0;border-top:2px solid var(--ink)}
+.leyenda-linea.punteada{border-top:2px dashed var(--green)}
+.leyenda-banda{display:inline-block;width:14px;height:10px;background:var(--orange-soft);border:1px solid #e8d3bc}
+
+.det-tabla-panel,.det-resumen{margin-top:23px}
+.det-tabla-panel table{min-width:640px}
+.det-tabla-panel td{vertical-align:middle;font-size:12px}
+.det-nombre{display:flex;align-items:center;gap:8px;font-weight:600}
+.det-punto{width:10px;height:10px;border-radius:50%;flex:none}
+.det-desc{display:block;font-weight:400;color:var(--muted);font-size:10px;margin-top:2px}
+tr.mejor{background:#e9f3ec}
+tr.mejor:hover{background:#e1eee5}
+.mejor-badge{display:inline-block;margin-left:6px;padding:1px 6px;border-radius:4px;background:var(--green);color:#fff;font-size:9px;font-weight:700;letter-spacing:.4px}
+
+.recomendacion{font-size:14px;line-height:1.6;margin:4px 0 0;padding:12px 14px;background:#eef3ef;border-radius:10px}
+.resumen-meta{font-size:10px;color:var(--muted);margin:14px 0 0}
+
+/* SVG */
+.det-svg-texto{fill:#66766e;font-family:Inter,"Segoe UI",Arial,sans-serif;font-size:10px}
+.det-svg-carril{fill:var(--ink);font-family:Inter,"Segoe UI",Arial,sans-serif;font-size:10.5px}
+.det-svg-unidad{fill:#66766e;font-family:Inter,"Segoe UI",Arial,sans-serif;font-size:10px;font-weight:600}
+.det-banda{fill:#f8e9d7}
+.det-banda-carril{fill:#fbf1e5}
+.det-observado{fill:none;stroke:var(--ink);stroke-width:1.8}
+.det-esperado{fill:none;stroke:var(--green);stroke-width:1.5;stroke-dasharray:5 4}
+.det-alerta{cursor:pointer}
+.det-alerta:hover,.det-alerta:focus{stroke:var(--ink);stroke-width:2}
+.det-alerta:focus{outline:none}
+.det-alerta.activa{stroke:#b86629;stroke-width:3}
+.det-linea{fill:none;stroke-width:2}
+.det-bigote{stroke-width:1.2}
+
+@media(max-width:1050px){.det-grid{grid-template-columns:1fr}}
+@media(max-width:800px){
+  .aviso-simulado{padding:10px 5%}
+  .det-controles{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .field-wide{grid-column:1/-1}
+  .det-resumen .panel-heading{flex-direction:column;align-items:flex-start}
+}
+@media(max-width:520px){.det-controles{grid-template-columns:1fr}.field-small{min-width:0}}
