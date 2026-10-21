@@ -45,7 +45,8 @@ async function cargarEscenario() {
   try {
     const datos = await pedir("scenario", parametros(), controlador.signal);
     pintarTabla(datos); 
-    pintarGrafica(datos);   
+    pintarGrafica(datos);
+    pintarVeredicto(datos);   
     limpiarExplicacion();       
     $("estado").textContent = "Actualizado · Datos simulados";
   } catch (error) {
@@ -498,6 +499,135 @@ for (const boton of document.querySelectorAll("[data-version]")) {
 
 
 $("tipo").addEventListener("change", cargarResumen);
+
+// ---------- Mejora 2 · Veredicto del escenario ----------
+
+const SIN_ANIMACION = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+// Cuenta desde 0 hasta el valor final en ~0.6 s (o lo pone directo si el usuario pidió menos movimiento).
+function animarNumero(elemento, valor, formatear) {
+  if (valor === null || valor === undefined || SIN_ANIMACION) {
+    elemento.textContent = valor === null || valor === undefined ? "—" : formatear(valor);
+    return;
+  }
+  const inicio = performance.now();
+  const duracion = 600;
+  const paso = (ahora) => {
+    const t = Math.min(1, (ahora - inicio) / duracion);
+    const suave = 1 - Math.pow(1 - t, 3);            // empieza rápido y frena al final
+    elemento.textContent = formatear(valor * suave);
+    if (t < 1) requestAnimationFrame(paso);
+  };
+  requestAnimationFrame(paso);
+}
+
+// Escribe una frase con partes en negrita sin usar innerHTML: [["texto normal"], ["texto", true], ...]
+function frase(elemento, partes) {
+  elemento.replaceChildren();
+  for (const [texto, negrita] of partes) {
+    if (negrita) {
+      const fuerte = document.createElement("strong");
+      fuerte.textContent = texto;
+      elemento.append(fuerte);
+    } else {
+      elemento.append(document.createTextNode(texto));
+    }
+  }
+}
+
+function pintarVeredicto(datos) {
+  const p = datos.parametros;
+  const esFuga = p.tipo === "fuga";
+  const tamano = new Intl.NumberFormat("es-MX", { style: "percent", maximumFractionDigits: 0 }).format(p.magnitud);
+  const problema = esFuga ? "una fuga de agua" : "un gasto extra de energía";
+  const reglas = datos.detectores.find((d) => d.id === "1_reglas");
+  const idMejor = elegirMejor(datos.detectores);
+  const mejor = datos.detectores.find((d) => d.id === idMejor) || null;
+  const nombreMejor = mejor ? (detectores.get(mejor.id) || { nombre: mejor.id }).nombre : null;
+  const coste = (d) => d.fit_ms + d.pred_ms;
+  const masCaro = datos.detectores.reduce((a, b) => (coste(b) > coste(a) ? b : a), datos.detectores[0]);
+
+  // 1) La frase principal.
+  if (p.magnitud === 0) {
+    frase($("veredicto-frase"), [["Sin problema inyectado en " + p.sitio + ": "], ["cualquier alerta aquí es una falsa alarma", true], ["."]]);
+  } else if (mejor) {
+    frase($("veredicto-frase"), [
+      [`Con ${problema} del ${tamano} en ${p.sitio}, las reglas del kit detectan `],
+      [`${reglas ? reglas.eventos_detectados : "—"} de ${reglas ? reglas.eventos_totales : "—"}`, true],
+      [`; ${nombreMejor} detecta `],
+      [`${mejor.eventos_detectados} de ${mejor.eventos_totales}`, true],
+      [` con ${numero(mejor.falsas_alarmas_dia)} falsas alarmas al día.`],
+    ]);
+  } else {
+    frase($("veredicto-frase"), [
+      [`Con ${problema} del ${tamano} en ${p.sitio}, `],
+      ["ningún detector encontró todos los eventos", true],
+      [". Prueba con un tamaño mayor o mira el resumen de abajo."],
+    ]);
+  }
+
+  // Sin problema inyectado: las tarjetas muestran falsas alarmas, no "detectados".
+  if (p.magnitud === 0) {
+    const menosFalsas = datos.detectores.reduce((a, b) => (b.falsas_alarmas_dia < a.falsas_alarmas_dia ? b : a), datos.detectores[0]);
+    $("v-reglas").textContent = reglas ? `${numero(reglas.falsas_alarmas_dia)} /día` : "—";
+    $("v-reglas-nota").textContent = "falsas alarmas: no hay nada que detectar";
+    $("v-mejor-nombre").textContent = "Menos falsas alarmas";
+    $("v-mejor").textContent = `${numero(menosFalsas.falsas_alarmas_dia)} /día`;
+    $("v-mejor-nota").textContent = (detectores.get(menosFalsas.id) || { nombre: menosFalsas.id }).nombre;
+    $("v-exceso-etiqueta").textContent = esFuga ? "Agua extra" : "Energía extra";
+    $("v-exceso").textContent = `0.0 ${datos.unidad}`;
+    $("v-exceso-nota").textContent = "no se inyectó ningún problema";
+    $("v-coste").textContent = "—";
+    $("v-coste-nota").textContent = "sube el tamaño del problema para comparar";
+    return;
+  }
+
+  // 2) Tarjeta de las reglas del kit.
+  if (reglas) {
+    $("v-reglas").textContent = `${reglas.eventos_detectados} de ${reglas.eventos_totales}`;
+    $("v-reglas-nota").textContent = reglas.eventos_detectados === 0
+      ? "no vio ningún evento: umbral fijo igual para todos los sitios"
+      : `eventos vistos con umbrales fijos · ${numero(reglas.falsas_alarmas_dia)} falsas alarmas/día`;
+  }
+
+  // 3) Tarjeta del mejor detector.
+  if (mejor) {
+    $("v-mejor-nombre").textContent = `Mejor: ${nombreMejor}`;
+    $("v-mejor").textContent = `${mejor.eventos_detectados} de ${mejor.eventos_totales}`;
+    $("v-mejor-nota").textContent = `avisa en ${numero(mejor.horas_hasta_alerta)} h · ${numero(mejor.falsas_alarmas_dia)} falsas alarmas/día`;
+  } else {
+    $("v-mejor-nombre").textContent = "Mejor detector";
+    $("v-mejor").textContent = "—";
+    $("v-mejor-nota").textContent = "ningún detector encontró todos los eventos";
+  }
+
+  // 4) Tarjeta del exceso no detectado (agua o energía).
+  $("v-exceso-etiqueta").textContent = esFuga ? "Agua que pasó sin aviso (reglas)" : "Energía extra sin aviso (reglas)";
+  animarNumero($("v-exceso"), reglas ? reglas.exceso_no_detectado : null, (v) => `${numero(v)} ${datos.unidad}`);
+  $("v-exceso-nota").textContent = mejor
+    ? `con ${nombreMejor}: ${numero(mejor.exceso_no_detectado)} ${datos.unidad}`
+    : "ningún detector la cortó a tiempo en todos los eventos";
+
+  // 5) Tarjeta del cómputo.
+  if (mejor) {
+    animarNumero($("v-coste"), coste(mejor), (v) => `${numero(v)} ms`);
+    const veces = coste(masCaro) / Math.max(coste(mejor), 0.01);
+    const nombreCaro = (detectores.get(masCaro.id) || { nombre: masCaro.id }).nombre;
+    $("v-coste-nota").textContent = masCaro.id === mejor.id
+      ? "es también el más caro de los cinco"
+      : `${nombreCaro}: ${numero(coste(masCaro))} ms (${numero(veces)}× más)`;
+  } else {
+    $("v-coste").textContent = "—";
+    $("v-coste-nota").textContent = "sin detector recomendado en este escenario";
+  }
+
+  // Pequeña animación de entrada en las tarjetas.
+  for (const tarjeta of document.querySelectorAll(".v-tarjeta")) {
+    tarjeta.classList.remove("v-actualizado");
+    void tarjeta.offsetWidth;                      // reinicia la animación
+    tarjeta.classList.add("v-actualizado");
+  }
+}
 
 function actualizarEtiquetaMagnitud() {
   $("magnitud-valor").textContent = `${$("magnitud").value} %`;

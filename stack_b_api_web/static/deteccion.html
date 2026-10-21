@@ -62,6 +62,33 @@
     <div class="view-meta"><p id="modo"></p><p id="estado" role="status" aria-live="polite">Cargando…</p></div>
     <div id="error" class="error-panel" role="alert" hidden></div>
 
+    <section id="veredicto" class="veredicto" aria-labelledby="veredicto-frase">
+      <p class="eyebrow">VEREDICTO DE ESTE ESCENARIO</p>
+      <h2 id="veredicto-frase" class="veredicto-frase" aria-live="polite">Cargando el escenario…</h2>
+      <div class="v-tarjetas">
+        <article class="v-tarjeta v-mala">
+          <p class="v-etiqueta">Reglas del kit</p>
+          <p class="v-cifra" id="v-reglas">—</p>
+          <p class="v-nota" id="v-reglas-nota"></p>
+        </article>
+        <article class="v-tarjeta v-buena">
+          <p class="v-etiqueta" id="v-mejor-nombre">Mejor detector</p>
+          <p class="v-cifra" id="v-mejor">—</p>
+          <p class="v-nota" id="v-mejor-nota"></p>
+        </article>
+        <article class="v-tarjeta">
+          <p class="v-etiqueta" id="v-exceso-etiqueta">Agua que pasó sin aviso</p>
+          <p class="v-cifra" id="v-exceso">—</p>
+          <p class="v-nota" id="v-exceso-nota"></p>
+        </article>
+        <article class="v-tarjeta">
+          <p class="v-etiqueta">Cómputo del mejor</p>
+          <p class="v-cifra" id="v-coste">—</p>
+          <p class="v-nota" id="v-coste-nota"></p>
+        </article>
+      </div>
+    </section>
+
     <div class="det-grid">
       <section class="panel" aria-labelledby="grafica-titulo">
         <div class="panel-heading"><div><p class="eyebrow">LA PRUEBA</p><h2 id="grafica-titulo">Observado frente a esperado</h2></div></div>
