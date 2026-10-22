@@ -153,3 +153,14 @@ body.demo-en-curso .filter-panel{outline:2px solid #ebb17b;outline-offset:4px;bo
 .m-ayuda{margin:0;font-size:10.5px;line-height:1.5;color:var(--muted)}
 .metricas-nota{margin:14px 0 0;font-size:10px;color:var(--muted)}
 @media(max-width:800px){.m-tarjetas{grid-template-columns:1fr}}
+
+/* A3 · Tarjeta "Por qué importa en Yucatán" */
+.yucatan{display:flex;gap:18px;align-items:flex-start;background:#eaf1f2;border:1px solid #c9dcdf;border-radius:var(--radius);padding:20px 24px;margin:0 0 18px}
+.yucatan-icono{flex:none;width:42px;height:42px;border-radius:12px;background:#173b39;display:grid;place-items:center}
+.yucatan-icono svg{width:22px;height:22px;fill:#5e95a4}
+.yucatan .eyebrow{font-size:9px;margin-bottom:5px;color:#3f6f78}
+.yucatan h2{font-size:17px;font-weight:650;letter-spacing:-.3px;margin:0 0 10px;line-height:1.3}
+.yucatan-lista{margin:0;padding-left:18px;font-size:12.5px;line-height:1.65;color:var(--ink)}
+.yucatan-lista li+li{margin-top:4px}
+.yucatan-fuente{margin:10px 0 0;font-size:10px;color:var(--muted)}
+@media(max-width:520px){.yucatan{flex-direction:column;padding:18px}}
