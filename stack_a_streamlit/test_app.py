@@ -44,11 +44,11 @@ class DashboardTests(unittest.TestCase):
         self.assert_metrics_match(at, self.data)
         self.assertTrue(any("DATOS SIMULADOS" in w.value for w in at.warning))
         self.assertEqual(len(at.get("file_uploader")), 0)
-        self.assertEqual(len(at.get("arrow_vega_lite_chart")), 3)
+        self.assertEqual(len(at.get("vega_lite_chart")), 3)
 
     def test_all_chart_scales_use_utc(self):
         at = self.app()
-        for chart in at.get("arrow_vega_lite_chart"):
+        for chart in at.get("vega_lite_chart"):
             spec = json.loads(chart.proto.spec)
             self.assertEqual(spec["encoding"]["x"]["scale"]["type"], "utc")
             self.assertEqual(spec["encoding"]["tooltip"][0]["field"], "hour_label")
