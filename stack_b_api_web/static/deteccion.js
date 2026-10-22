@@ -798,7 +798,7 @@ async function fijarEscenario({ sitio, tipo, magnitud, semilla }) {
 }
 
 const demo = { activa: false, turno: 0 };
-const PASOS_DEMO = 5;
+const PASOS_DEMO = 6;
 
 function esperar(ms) {
   const turno = demo.turno;
@@ -888,6 +888,25 @@ async function reproducirDemo() {
     subtitulo(5, `Con datos difíciles (ruido y relación no lineal): ${minuscula($("recomendacion").textContent)}`);
     await esperar(8000);
 
+    await fijarEscenario({ sitio: "SIM-B", tipo: "fuga", magnitud: 10, semilla: 1 });
+    $("dias").value = 7;
+    $("dias-valor").textContent = "7 días";
+    await cargarBalance();
+    desplazarA($("balance"));
+    const b = ultimoBalance;
+    if (b) {
+      const c = b.costo_detector_anual;
+      const evita = b.beneficio.unidad === "L"
+        ? `${cifra(b.beneficio.evitado)} L de agua`
+        : `${cifra(b.beneficio.kwh_evitados)} kWh`;
+      subtitulo(6, `Balance neto: si una fuga del 10 % en SIM-B tardara ${b.supuestos.dias_sin_detector} días en descubrirse, se perderían ${evita}. ` +
+        `Tener el detector encendido todo un año cuesta ${cifra(c.g_co2e)} g de CO₂e. ` +
+        (b.balance_positivo ? "Ahorra mucho más de lo que gasta." : "En este caso no compensa."));
+    } else {
+      subtitulo(6, "Balance neto: comparamos lo que cuesta el detector al año con lo que evita perder.");
+    }
+    await esperar(10000);
+
     $("demo-texto").textContent = "Fin de la demo. Ahora puedes mover los controles.";
     await esperar(3500);
     terminarDemo();
@@ -928,7 +947,7 @@ cargarDetectores().then(() => {
   cargarResumen();
 });
 
-// ---------- A2 · Tarjetas de métricas (PUE, WUE, CUE) ----------
+// Tarjetas de métricas 
 
 const METRICAS = [
   { clave: "pue", nombre: "PUE", unidad: "", ayuda: "Energía total ÷ energía de los servidores. Lo ideal es 1." },
