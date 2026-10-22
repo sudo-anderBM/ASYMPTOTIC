@@ -1,156 +1,89 @@
 # ASYMPTOTIC
 
-**¿Qué detector ve una fuga de agua pequeña en un centro de datos, y cuánto cómputo cuesta tenerlo encendido?**
+<p align="center">
+  <strong>IA eficiente para centros de datos sostenibles</strong>
+  <br>
+  Detección de fugas de agua e ineficiencias mediante modelos estadísticos y aprendizaje automático.
+</p>
 
-- Reto principal: **4 · Practicar GreenAI en CPU**.
+<p align="center">
+  <img src="https://img.shields.io/badge/Python-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python">
+  <img src="https://img.shields.io/badge/FastAPI-009688?style=flat-square&logo=fastapi&logoColor=white" alt="FastAPI">
+  <img src="https://img.shields.io/badge/GreenAI-Eficiencia%20computacional-10B981?style=flat-square" alt="GreenAI">
+  <img src="https://img.shields.io/badge/Datos-Sintéticos-F59E0B?style=flat-square" alt="Datos sintéticos">
+</p>
 
+## ¿Qué es ASYMPTOTIC?
 
-> ⚠️ **DATOS SIMULADOS.** Todo es sintético: no hay equipos reales, lecturas en vivo ni acciones de control. Los tiempos y la memoria son **medidos**; la energía y el CO₂e son **estimaciones** con supuestos declarados. Las alertas requieren revisión humana.
+ASYMPTOTIC investiga si detectores ligeros pueden identificar fugas pequeñas de agua en centros de datos simulados, comparando su precisión y costo computacional.
 
-## Qué hicimos
+**¿Por qué importa en Yucatán?** La península depende del agua subterránea y su terreno kárstico facilita la infiltración de contaminantes. Prevenir pérdidas de agua es relevante para proteger este recurso.
 
-Comparamos cinco detectores de fugas e ineficiencias sobre los datos simulados del kit CIFOX (3 sitios × 168 horas): las reglas fijas del kit, IsolationForest, Residual 3σ, Residual CUSUM y Z-score. A cada uno le medimos **calidad y costo a la vez**, con el mismo archivo, repeticiones, calentamiento y las fases de aprender (fit) y revisar (predict) por separado.
+En nuestra simulación, una fuga del 10 % en un sitio evaporativo que consume 140 L/h puede representar aproximadamente **2,352 litros perdidos en siete días**.
 
-Resultado con fugas del 10 % (90 eventos, datos normales): las reglas detectan **0 %**, el Residual 3σ **100 %** con 0.008 falsas alarmas al día y unos 5 ms; IsolationForest detecta 33 %, da 1.3 falsas alarmas al día y tarda unos 100 ms.
+*Referencia regional: [Yucatan State Report Card 2017](https://ian.umces.edu/site/assets/files/11212/yucatan-state-report-card-2017.pdf). Las cifras de consumo son simuladas.*
 
-Seguridad: la API verifica con SHA-256 que datos y resultados sean los originales antes de mostrarlos, y medimos que el Residual 3σ también detecta medidores falsificados (98–100 % frente a 2 % por azar). Ver [docs/SEGURIDAD.md](docs/SEGURIDAD.md).
+## ¿Cómo funciona?
 
-## Documentos de entrega
+Comparamos cinco detectores:
 
-- [Ficha de datos y supuestos](docs/FICHA_SUPUESTOS.md).
-- [Qué venía en el kit y qué aportamos, y límites](docs/APORTACION.md).
-- [Acuífero, gobernanza y escenarios sin agua potable](docs/ACUIFERO_Y_ESCENARIOS.md).
-- [Seguridad: integridad de datos y lecturas falsificadas](docs/SEGURIDAD.md).
-- [Capturas de la interfaz](docs/capturas/).
-- [Tabla oficial de cifras](results/cifras.txt).
+- **Reglas fijas:** umbrales operativos.
+- **Isolation Forest:** aprendizaje automático no supervisado.
+- **Residual 3σ:** desviaciones respecto al comportamiento esperado.
+- **Residual CUSUM:** acumulación de desviaciones pequeñas.
+- **Z-score:** detección estadística de valores atípicos.
 
-## 1. Instalación (Python 3.12)
+El modelo residual calcula la diferencia entre el consumo observado y el esperado:
 
-Desde la raíz del repositorio. La primera vez necesita internet para instalar dependencias; después todo funciona sin conexión.
+\[
+r_t=y_t-\hat{y}_t
+\]
 
-**Windows (PowerShell):**
+Las desviaciones permiten identificar posibles anomalías que requieren revisión humana.
 
-```powershell
-py -3.12 -m venv .venv-b
-.\.venv-b\Scripts\python.exe -m pip install -r stack_b_api_web\requirements.txt
-.\.venv-b\Scripts\python.exe -m pip check
-```
+## Resultados experimentales
 
-**macOS / Linux:**
+Para fugas simuladas del 10 %:
+
+| Detector | Detección normal | Detección difícil |
+|---|---:|---:|
+| Reglas fijas | 0 % | 0 % |
+| Isolation Forest | 33 % | 32 % |
+| Residual 3σ | 100 % | 39 % |
+| Residual CUSUM | 100 % | 77 % |
+| Z-score | 48 % | 22 % |
+
+En el escenario normal, Residual 3σ registró aproximadamente 0.008 falsas alarmas al día y un costo mediano de 5.3 ms en el benchmark reportado.
+
+**GreenAI:** evaluamos detección, falsas alarmas, tiempo de CPU, latencia y memoria. La energía y el CO₂e se estiman mediante supuestos explícitos; no son mediciones directas.
+
+## Tecnologías y ejecución
+
+- Python 3.12 y scikit-learn 1.8.0.
+- FastAPI para la API y la interfaz web.
+- Datos sintéticos, escenarios controlados y pruebas automatizadas.
+- Ejecución en CPU, sin necesidad de GPU.
 
 ```bash
 python3.12 -m venv .venv-b
 .venv-b/bin/python -m pip install -r stack_b_api_web/requirements.txt
-.venv-b/bin/python -m pip check
+.venv-b/bin/python -m uvicorn stack_b_api_web.main:app --host 127.0.0.1 --port 8000
 ```
 
-`stack_b_api_web/requirements.txt` incluye `scikit-learn==1.8.0`, que necesitan los detectores. No hace falta GPU, Node ni cuentas.
+En Windows, utiliza `.\.venv-b\Scripts\python.exe` en lugar de `.venv-b/bin/python`.
 
-## 2. Arrancar la demo
+Interfaz: [http://127.0.0.1:8000/static/deteccion.html](http://127.0.0.1:8000/static/deteccion.html)
 
-```powershell
-.\.venv-b\Scripts\python.exe -m uvicorn stack_b_api_web.main:app --host 127.0.0.1 --port 8000
-```
+## Alcance y limitaciones
 
-(En macOS/Linux, `.venv-b/bin/python` en lugar de `.\.venv-b\Scripts\python.exe`.)
+Los datos y escenarios son sintéticos. El rendimiento no está validado en instalaciones reales; las estimaciones ambientales dependen de supuestos y las alertas no deben utilizarse para controlar equipos.
 
-- Nuestra página: **http://127.0.0.1:8000/static/deteccion.html**
-- Panel original del kit, sin cambios: http://127.0.0.1:8000/
-- Contrato de la API: http://127.0.0.1:8000/openapi.json
+El proyecto parte del kit CIFOX y añade detectores, evaluación experimental y medición de recursos. Se utilizaron asistentes de IA como apoyo al desarrollo, con revisión y pruebas del equipo.
 
-No abrir los HTML con doble clic: la página necesita la API local. Ctrl + C detiene el servidor.
+Consulta `docs/` y `results/` para conocer los supuestos, la metodología y los resultados completos. La licencia y las condiciones de uso se especifican en los archivos del repositorio.
 
-## 3. Pruebas
+---
 
-Los comandos de la guía CIFOX (página 9):
-
-```powershell
-.\.venv-b\Scripts\python.exe -m unittest discover -s tests -v
-.\.venv-b\Scripts\python.exe -m unittest discover -s stack_b_api_web/tests -v
-```
-
-### Integridad de datos y resultados
-
-Antes de mostrar una cifra, la API comprueba que cada archivo que sirve conserva su huella SHA-256 (`greenai/integridad.py`):
-
-- CSV y `reference_metrics.json` del kit: contra las huellas oficiales de `MANIFEST.json`, fijas en el código.
-- `results/` y los ejemplos de `static/mock/`: contra `results/HUELLAS.sha256`.
-
-Si un solo byte cambia, `/api/*` y `/static/mock/*` responden 503 y la página muestra el aviso en lugar de cifras. La consola del servidor dice qué archivo falló.
-
-```powershell
-.\.venv-b\Scripts\python.exe -m greenai.integridad
-```
-
-Límite: protege contra cambios accidentales o de quien no edite también `HUELLAS.sha256`. Firmar las huellas con una clave fuera del repositorio queda fuera del prototipo. Los finales de línea CRLF cuentan como LF, para que Windows y Linux den la misma huella.
-
-## 4. Repetir la medición
-
-```powershell
-.\.venv-b\Scripts\python.exe -m greenai.bench --reps 30 --warmup 3
-.\.venv-b\Scripts\python.exe -m greenai.sweep
-.\.venv-b\Scripts\python.exe -m greenai.cifras | Out-File -Encoding utf8 results\cifras.txt
-.\.venv-b\Scripts\python.exe -m greenai.ataques
-.\.venv-b\Scripts\python.exe -m greenai.integridad --actualizar
-```
-
-El último comando registra las huellas de los resultados nuevos; sin él, la API se niega a mostrarlos. Nunca actualiza las huellas del kit.
-
-| Comando | Qué mide | Archivos que escribe |
-|---|---|---|
-| `greenai.bench` | CSV del kit: tiempo de pared y de CPU de fit y predict (30 repeticiones, 3 de calentamiento), pico de memoria de Python (tracemalloc), F1/precisión/recall con IC y energía/CO₂e estimados con 15, 30 y 65 W | `results/bench.csv`, `results/sensibilidad.csv`, `results/env.json` |
-| `greenai.sweep` | Fugas e ineficiencias inyectadas de 5 % a 100 %, datos normales y difíciles, 10 semillas × 3 sitios × 3 eventos = 90 eventos por punto, con IC de Wilson; costo como mediana y desviación de 10 repeticiones | `results/sweep_fuga.json`, `results/sweep_ineficiencia.json` |
-| `greenai.cifras` | Tabla de cifras que usa la página y el pitch | `results/cifras.txt` |
-| `greenai.ataques` | Lecturas falsificadas (fijo, deriva, *replay*, *replay* coherente) frente a los cinco detectores, 60 ventanas de 12 h por celda | `results/ataques.json` |
-| `greenai.integridad --actualizar` | Huellas SHA-256 de los resultados del equipo | `results/HUELLAS.sha256` |
-
-Los tiempos dependen del equipo: las versiones y el equipo quedan en `results/env.json` y en `meta` de cada `sweep_*.json` (medido con Python 3.12.10, scikit-learn 1.8.0, Windows 11).
-
-## 5. Resultados
-
-Fugas del 10 %, `results/sweep_fuga.json`:
-
-| Detector | Datos normales | IC 95 % | Falsas alarmas/día | Datos difíciles | Costo (mediana, ms) |
-|---|---|---|---|---|---|
-| Reglas del kit (sin eventos OT) | 0 % | 0–4 % | 0 | 0 % | 0.2 |
-| IsolationForest | 33 % | 25–44 % | 1.28 | 32 % | 100.1 |
-| Residual 3σ | 100 % | 96–100 % | 0.008 | 39 % | 5.3 |
-| Residual CUSUM | 100 % | 96–100 % | 0.28 | 77 % | 6.9 |
-| Z-score simple | 48 % | 38–58 % | 0 | 22 % | 1.3 |
-
-Ineficiencias del 10 % (datos normales): reglas 0 %, Residual 3σ 86 %, CUSUM 91 %, IsolationForest 31 %.
-
-**Energía y CO₂e (estimados):** suponiendo 30 W (no medidos) y el factor de 0.444 kg CO₂e/kWh (Sistema Eléctrico Nacional 2024, aviso SEMARNAT del 28/02/2025), revisar cada hora y reaprender a diario durante un año con el Residual 3σ cuesta unos 1.2 s de CPU, unos 0.00001 kWh y unos 4.6 mg de CO₂e. Una fuga del 10 % en el sitio evaporativo que tardara 7 días en descubrirse perdería unos 2,350 L.
-
-## 6. Comparación justa
-
-- Ningún detector usa los eventos OT del kit ni las columnas `scenario` y `simulated_anomaly`.
-- Todos se ajustan con la partición `referencia` (3 días) y se califican con `evaluacion` (4 días).
-- Cada semilla cambia el ruido y la posición de las fugas.
-- Con las anomalías originales del kit (`greenai.bench`), las reglas y el Residual 3σ empatan (F1 0.86): esas anomalías se diseñaron para ser visibles a las reglas. Por eso medimos también con fugas pequeñas inyectadas.
-
-## 7. Límites
-
-- Solo datos simulados; nada está demostrado en una instalación real.
-- El residual es un modelo lineal: con ruido y relaciones no lineales, las fugas del 10 % se detectan mucho menos (39 %).
-- Energía y CO₂e dependen de la potencia y del factor supuestos; un menor tiempo no demuestra por sí solo menos energía.
-- `tracemalloc` mide la memoria que reserva Python, no toda la RAM del proceso.
-- No se calcula agua por consulta de IA: la estimación de costo no incluye agua.
-- Las alertas son señales para revisión humana, no diagnósticos.
-- Un *replay* coherente (repetir la fila completa de 24 h antes) no lo detecta ningún detector; solo lo frenaría firmar cada lectura en el origen.
-
-## 8. Estructura
-
-| Carpeta | Contenido |
-|---|---|
-| `common/`, `data/`, `tools/`, `docs/*` del kit, `stack_a_streamlit/` | Kit CIFOX (licencia MIT), sin cambios |
-| `greenai/` | Detectores, datos limpios, escenarios, métricas por evento, explicación, barrido, balance, medición, ataques de falsificación e integridad SHA-256 |
-| `stack_b_api_web/` | API FastAPI (base del kit + endpoints `/api/detectors`, `/api/scenario`, `/api/explain`, `/api/sweep`, `/api/balance`) y la página `static/deteccion.html` |
-| `tests/` | Pruebas del proyecto (unittest) |
-| `results/` | Mediciones y cifras |
-
-Usamos asistentes de IA para programar y redactar; el equipo revisó y probó los resultados.
-
-## Licencia
-
-El código, la documentación y el CSV originales del kit CIFOX se distribuyen con la licencia MIT incluida en `LICENSE`. El kit de datos se usa exclusivamente para fines del hackathon.
+<p align="center">
+  <strong>Matemáticas × Física × IA × Eficiencia computacional</strong>
+</p>
