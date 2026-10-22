@@ -33,11 +33,13 @@ Comparamos cinco detectores:
 - **Residual CUSUM:** acumulación de desviaciones pequeñas.
 - **Z-score:** detección estadística de valores atípicos.
 
-El modelo residual calcula la diferencia entre el consumo observado y el esperado:
+El modelo residual estima la diferencia entre el consumo observado y el esperado:
 
-\[
-r_t=y_t-\hat{y}_t
-\]
+$$
+r_t = y_t - \hat{y}_t
+$$
+
+donde \(y_t\) representa el consumo observado, \(\hat{y}_t\) el consumo estimado por el modelo y \(r_t\) el residuo. Un residuo elevado puede indicar una anomalía que requiere revisión.
 
 Las desviaciones permiten identificar posibles anomalías que requieren revisión humana.
 
