@@ -1,0 +1,44 @@
+{
+  "simulated": true,
+  "nota": "Calculado del CSV simulado del kit (PUE y WUE como cociente de sumas).",
+  "periodo": {
+    "inicio": "2026-10-12T00:00:00Z",
+    "fin": "2026-10-18T23:00:00Z"
+  },
+  "sitios": [
+    {
+      "sitio": "SIM-A",
+      "refrigeracion": "aire",
+      "energia_it_kwh": 27595.57,
+      "energia_total_kwh": 38227.83,
+      "agua_l": 882.9,
+      "pue": 1.3853,
+      "wue_l_kwh": 0.032
+    },
+    {
+      "sitio": "SIM-B",
+      "refrigeracion": "evaporativa",
+      "energia_it_kwh": 27581.4,
+      "energia_total_kwh": 34120.22,
+      "agua_l": 24849.43,
+      "pue": 1.2371,
+      "wue_l_kwh": 0.9009
+    },
+    {
+      "sitio": "SIM-C",
+      "refrigeracion": "liquida",
+      "energia_it_kwh": 27479.46,
+      "energia_total_kwh": 32907.95,
+      "agua_l": 5860.81,
+      "pue": 1.1975,
+      "wue_l_kwh": 0.2133
+    }
+  ],
+  "total": {
+    "energia_it_kwh": 82656.42,
+    "energia_total_kwh": 105256.01,
+    "agua_l": 31593.14,
+    "pue": 1.2734,
+    "wue_l_kwh": 0.3822
+  }
+}

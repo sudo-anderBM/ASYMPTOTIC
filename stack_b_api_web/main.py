@@ -24,6 +24,7 @@ from greenai import service  # noqa: E402
 
 STATIC = Path(__file__).resolve().parent / "static"
 DATA_FILE = ROOT / "data" / "operaciones_simuladas.csv"
+BALANCE_MOCK = STATIC / "mock" / "balance.json"
 FILTER_COLUMNS = ("site_id", "cooling_type", "split")
 
 app = FastAPI(
@@ -191,7 +192,6 @@ def api_explain(
     return _422(service.explicacion, tipo, magnitud, sitio, semilla, timestamp)
 
 
-
 @app.get("/api/sweep")
 def api_sweep(tipo: str | None = Query(default=None, max_length=40)):
     try:
@@ -200,3 +200,34 @@ def api_sweep(tipo: str | None = Query(default=None, max_length=40)):
         raise HTTPException(
             status_code=503, detail="Falta ejecutar python -m greenai.sweep"
         ) from None
+
+
+# ---------------------------------------------------------------------------
+# Balance de energia y agua.
+# TEMPORAL: sirve el archivo de ejemplo static/mock/balance.json. Cuando exista
+# el calculo real, reemplazar solo el cuerpo de `_leer_balance` y conservar la
+# forma del JSON (contrato con el frontend).
+# ---------------------------------------------------------------------------
+def _leer_balance() -> dict[str, Any]:
+    try:
+        with open(BALANCE_MOCK, encoding="utf-8") as f:
+            data = json.load(f)
+    except FileNotFoundError:
+        raise HTTPException(
+            status_code=503, detail="Falta el archivo de ejemplo static/mock/balance.json"
+        ) from None
+    except (OSError, ValueError):
+        raise HTTPException(
+            status_code=503, detail="El archivo static/mock/balance.json no es un JSON válido"
+        ) from None
+    if not isinstance(data, dict):
+        raise HTTPException(
+            status_code=503, detail="static/mock/balance.json debe ser un objeto JSON"
+        )
+    data["simulated"] = True  # contrato: siempre simulated: true
+    return data
+
+
+@app.get("/api/balance")
+def api_balance():
+    return _safe(_leer_balance())
