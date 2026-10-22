@@ -1055,7 +1055,7 @@ function pintarMetricas(m) {
 
 const BALANCE_DE_EJEMPLO = false;
 
-const SUPUESTOS = { watts: 30, factor: 0.438, l_por_kwh: 1.2 };
+const SUPUESTOS = { watts: 30, factor: 0.444, l_por_kwh: 1.2 };
 
 const formatoSig = new Intl.NumberFormat("es-MX", { maximumSignificantDigits: 2 });
 const formatoEntero = new Intl.NumberFormat("es-MX", { maximumFractionDigits: 0 });
@@ -1149,7 +1149,7 @@ function pintarBalance(b) {
   const s = b.supuestos;
   $("balance-supuestos").textContent =
     `Supuestos (no medidos): potencia supuesta de ${s.watts} W, ${s.revisiones_por_anio} revisiones y ${s.reentrenos_por_anio} reentrenamientos al año, ` +
-    `factor de emisión ${s.factor_kg_co2e_kwh} kg CO₂e/kWh (${s.factor_contexto || "red eléctrica de México, aviso 2023"}). ` +
+    `factor de emisión ${s.factor_kg_co2e_kwh} kg CO₂e/kWh (${s.factor_contexto || ""Sistema Eléctrico Nacional 2024, aviso SEMARNAT 28/02/2025""}). ` +
     "Medido: solo el tiempo de cómputo. No incluye fabricación, red ni agua." +
     (BALANCE_DE_EJEMPLO ? " (Datos de ejemplo: aún no cambian con los controles.)" : "");
 }

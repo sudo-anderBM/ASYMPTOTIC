@@ -28,7 +28,7 @@
 | Medido (en el equipo de quien ejecuta) | Supuesto (hipótesis declarada, no medida) |
 |---|---|
 | Tiempo de **aprender** (fit) y de **revisar** (predict), por separado, con calentamiento descartado | Potencia del equipo: **30 W**. No es el TDP ni una medición; `bench.py` también prueba 15 y 65 W |
-| Mediana, media y desviación de las repeticiones (`bench.py`: 30; `sweep.py`: 10) | Factor de emisión: **0.438 kg CO₂e/kWh**, Sistema Eléctrico Nacional de México, aviso 2023. `bench.py` también usa 100, 300 y 600 g/kWh como sensibilidad |
+| Mediana, media y desviación de las repeticiones (`bench.py`: 30; `sweep.py`: 10) | Factor de emisión: **0.444 kg CO₂e/kWh**, Sistema Eléctrico Nacional de México 2024, aviso de SEMARNAT del 28/02/2025. `bench.py` también usa 100, 300 y 600 g/kWh como sensibilidad |
 | Pico de memoria de Python (tracemalloc; no es la RAM total del proceso) | Uso del detector: revisar cada hora (8,760 veces al año) y reaprender una vez al día (365) |
 | Calidad de detección con intervalo de confianza del 95 % (Wilson) | Días que tardaría en descubrirse una fuga sin detector: **7** (se puede mover en la página) |
 | Sistema, CPU y versiones (`results/env.json` y `meta` de `results/sweep_*.json`) | |
