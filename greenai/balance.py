@@ -2,10 +2,9 @@
 import json
 from pathlib import Path
 
-from greenai.service import _base, FACTOR_RED_KG_KWH  # noqa: F401
+from greenai.service import _base
 
 RES = Path(__file__).resolve().parents[1] / "results"
-VAR = {"fuga": "water_l", "ineficiencia": "energy_total_kwh"}
 
 
 def _tiempos():
@@ -23,18 +22,28 @@ def calcular(tipo, magnitud, sitio, semilla, dias, watts, factor, l_por_kwh) -> 
 
     base = _base(semilla)
     g = base[(base.site_id == sitio) & (base.split == "evaluacion")]
-    perdida = float(g[VAR[tipo]].mean()) * magnitud
+    
+    if tipo == "ineficiencia":
+        perdida = float((g["energy_total_kwh"] - g["energy_it_kwh"]).mean()) * magnitud
+    else:
+        perdida = float(g["water_l"].mean()) * magnitud
+        
     total = perdida * 24 * dias
     if tipo == "fuga":
         ben = {"unidad": "L", "perdida_por_hora": round(perdida, 2),
                "evitado": round(total, 1), "kwh_evitados": None, "kg_co2e_evitados": None}
-        positivo = total > costo["l_agua_indirecta"]
+        positivo = None if magnitud == 0 else total > costo["l_agua_indirecta"]
     else:
         ben = {"unidad": "kWh", "perdida_por_hora": round(perdida, 2), "evitado": None,
                "kwh_evitados": round(total, 1), "kg_co2e_evitados": round(total * factor, 2)}
-        positivo = total > kwh
+        positivo = None if magnitud == 0 else total > kwh
+        
     return {"simulated": True,
             "supuestos": {"watts": watts, "factor_kg_co2e_kwh": factor,
                           "agua_indirecta_l_kwh": l_por_kwh, "dias_sin_detector": dias,
-                          "revisiones_por_anio": 8760, "reentrenos_por_anio": 365},
+                          "revisiones_por_anio": 8760, "reentrenos_por_anio": 365,
+                          "potencia_medida": False,
+                          "factor_contexto": "Sistema Eléctrico Nacional 2024, aviso SEMARNAT 28/02/2025",
+                          "detector": "3_residual_3sigma",
+                          "tiempos_de": "results/sweep_fuga.json"},
             "costo_detector_anual": costo, "beneficio": ben, "balance_positivo": positivo}
