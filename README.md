@@ -13,11 +13,14 @@ Comparamos cinco detectores de fugas e ineficiencias sobre los datos simulados d
 
 Resultado con fugas del 10 % (90 eventos, datos normales): las reglas detectan **0 %**, el Residual 3σ **100 %** con 0.008 falsas alarmas al día y unos 5 ms; IsolationForest detecta 33 %, da 1.3 falsas alarmas al día y tarda unos 100 ms.
 
+Seguridad: la API verifica con SHA-256 que datos y resultados sean los originales antes de mostrarlos, y medimos que el Residual 3σ también detecta medidores falsificados (98–100 % frente a 2 % por azar). Ver [docs/SEGURIDAD.md](docs/SEGURIDAD.md).
+
 ## Documentos de entrega
 
 - [Ficha de datos y supuestos](docs/FICHA_SUPUESTOS.md).
 - [Qué venía en el kit y qué aportamos, y límites](docs/APORTACION.md).
 - [Acuífero, gobernanza y escenarios sin agua potable](docs/ACUIFERO_Y_ESCENARIOS.md).
+- [Seguridad: integridad de datos y lecturas falsificadas](docs/SEGURIDAD.md).
 - [Capturas de la interfaz](docs/capturas/).
 - [Tabla oficial de cifras](results/cifras.txt).
 
@@ -66,19 +69,40 @@ Los comandos de la guía CIFOX (página 9):
 .\.venv-b\Scripts\python.exe -m unittest discover -s stack_b_api_web/tests -v
 ```
 
+### Integridad de datos y resultados
+
+Antes de mostrar una cifra, la API comprueba que cada archivo que sirve conserva su huella SHA-256 (`greenai/integridad.py`):
+
+- CSV y `reference_metrics.json` del kit: contra las huellas oficiales de `MANIFEST.json`, fijas en el código.
+- `results/` y los ejemplos de `static/mock/`: contra `results/HUELLAS.sha256`.
+
+Si un solo byte cambia, `/api/*` y `/static/mock/*` responden 503 y la página muestra el aviso en lugar de cifras. La consola del servidor dice qué archivo falló.
+
+```powershell
+.\.venv-b\Scripts\python.exe -m greenai.integridad
+```
+
+Límite: protege contra cambios accidentales o de quien no edite también `HUELLAS.sha256`. Firmar las huellas con una clave fuera del repositorio queda fuera del prototipo. Los finales de línea CRLF cuentan como LF, para que Windows y Linux den la misma huella.
+
 ## 4. Repetir la medición
 
 ```powershell
 .\.venv-b\Scripts\python.exe -m greenai.bench --reps 30 --warmup 3
 .\.venv-b\Scripts\python.exe -m greenai.sweep
 .\.venv-b\Scripts\python.exe -m greenai.cifras | Out-File -Encoding utf8 results\cifras.txt
+.\.venv-b\Scripts\python.exe -m greenai.ataques
+.\.venv-b\Scripts\python.exe -m greenai.integridad --actualizar
 ```
+
+El último comando registra las huellas de los resultados nuevos; sin él, la API se niega a mostrarlos. Nunca actualiza las huellas del kit.
 
 | Comando | Qué mide | Archivos que escribe |
 |---|---|---|
 | `greenai.bench` | CSV del kit: tiempo de pared y de CPU de fit y predict (30 repeticiones, 3 de calentamiento), pico de memoria de Python (tracemalloc), F1/precisión/recall con IC y energía/CO₂e estimados con 15, 30 y 65 W | `results/bench.csv`, `results/sensibilidad.csv`, `results/env.json` |
 | `greenai.sweep` | Fugas e ineficiencias inyectadas de 5 % a 100 %, datos normales y difíciles, 10 semillas × 3 sitios × 3 eventos = 90 eventos por punto, con IC de Wilson; costo como mediana y desviación de 10 repeticiones | `results/sweep_fuga.json`, `results/sweep_ineficiencia.json` |
 | `greenai.cifras` | Tabla de cifras que usa la página y el pitch | `results/cifras.txt` |
+| `greenai.ataques` | Lecturas falsificadas (fijo, deriva, *replay*, *replay* coherente) frente a los cinco detectores, 60 ventanas de 12 h por celda | `results/ataques.json` |
+| `greenai.integridad --actualizar` | Huellas SHA-256 de los resultados del equipo | `results/HUELLAS.sha256` |
 
 Los tiempos dependen del equipo: las versiones y el equipo quedan en `results/env.json` y en `meta` de cada `sweep_*.json` (medido con Python 3.12.10, scikit-learn 1.8.0, Windows 11).
 
@@ -113,13 +137,14 @@ Ineficiencias del 10 % (datos normales): reglas 0 %, Residual 3σ 86 %, CUSUM 91
 - `tracemalloc` mide la memoria que reserva Python, no toda la RAM del proceso.
 - No se calcula agua por consulta de IA: la estimación de costo no incluye agua.
 - Las alertas son señales para revisión humana, no diagnósticos.
+- Un *replay* coherente (repetir la fila completa de 24 h antes) no lo detecta ningún detector; solo lo frenaría firmar cada lectura en el origen.
 
 ## 8. Estructura
 
 | Carpeta | Contenido |
 |---|---|
 | `common/`, `data/`, `tools/`, `docs/*` del kit, `stack_a_streamlit/` | Kit CIFOX (licencia MIT), sin cambios |
-| `greenai/` | Detectores, datos limpios, escenarios, métricas por evento, explicación, barrido, balance y medición |
+| `greenai/` | Detectores, datos limpios, escenarios, métricas por evento, explicación, barrido, balance, medición, ataques de falsificación e integridad SHA-256 |
 | `stack_b_api_web/` | API FastAPI (base del kit + endpoints `/api/detectors`, `/api/scenario`, `/api/explain`, `/api/sweep`, `/api/balance`) y la página `static/deteccion.html` |
 | `tests/` | Pruebas del proyecto (unittest) |
 | `results/` | Mediciones y cifras |

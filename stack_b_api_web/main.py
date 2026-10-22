@@ -6,6 +6,7 @@ Desde la raíz del kit:
 from __future__ import annotations
 
 import json
+import logging
 import math
 from pathlib import Path
 import sys
@@ -13,7 +14,7 @@ from typing import Any
 
 import pandas as pd
 from fastapi import FastAPI, HTTPException, Query
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -21,6 +22,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 from common.cifox import flagged, load_data, metrics  # noqa: E402
 from greenai import balance as balance_calc  # noqa: E402
+from greenai import integridad  # noqa: E402
 from greenai import service  # noqa: E402
 
 STATIC = Path(__file__).resolve().parent / "static"
@@ -35,6 +37,28 @@ app = FastAPI(
     redoc_url=None,
 )
 app.mount("/static", StaticFiles(directory=STATIC), name="static")
+
+
+# Rutas que muestran datos o resultados: antes de servirlas se comprueba que
+# cada archivo conserva su huella SHA-256 (greenai/integridad.py).
+RUTAS_CON_DATOS = ("/api/", "/health", "/static/mock/")
+log = logging.getLogger("uvicorn.error")
+
+
+@app.middleware("http")
+async def integrity_check(request, call_next):
+    if request.url.path.startswith(RUTAS_CON_DATOS):
+        problemas = integridad.verificar()
+        if problemas:
+            # En la consola local, solo los nombres de archivo; nunca su contenido.
+            log.warning("Integridad: %s. Revisa con python -m greenai.integridad",
+                        ", ".join(f"{r} ({m})" for r, m in problemas))
+            return JSONResponse(status_code=503, content={
+                "detail": "Los datos o resultados no coinciden con su huella original "
+                          "(SHA-256). Por seguridad no se muestran cifras.",
+                "integridad": "falla",
+            })
+    return await call_next(request)
 
 
 @app.middleware("http")
@@ -108,7 +132,10 @@ def index():
 def health():
     """Comprueba también que el CSV se puede cargar."""
     df = _data()
-    return {"status": "ok", "simulated": True, "read_only": True, "rows": len(df)}
+    return {"status": "ok", "simulated": True, "read_only": True, "rows": len(df),
+            # Si llega aquí, el middleware ya comprobó todas las huellas.
+            "integridad": {"estado": "ok", "algoritmo": "SHA-256",
+                           "archivos": integridad.total_archivos()}}
 
 
 @app.get("/api/metrics")

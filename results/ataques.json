@@ -1,0 +1,69 @@
+{
+  "simulated": true,
+  "pregunta": "% de ventanas de 12 h con al menos una alarma",
+  "ventanas_por_celda": 60,
+  "semillas": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10
+  ],
+  "ataques": {
+    "sin_ataque": "Sin ataque (alarma por azar)",
+    "fijo": "Valor fijo en la temperatura de entrada",
+    "deriva": "Deriva de -1 %/h en el agua",
+    "replay": "Replay de 24 h solo del agua",
+    "coherente": "Replay coherente de la fila completa"
+  },
+  "detectores": [
+    "Reglas",
+    "IsolationForest",
+    "Residual 3σ",
+    "CUSUM",
+    "Z-score"
+  ],
+  "tasa": {
+    "sin_ataque": {
+      "Reglas": 0.0,
+      "IsolationForest": 0.717,
+      "Residual 3σ": 0.017,
+      "CUSUM": 0.083,
+      "Z-score": 0.0
+    },
+    "fijo": {
+      "Reglas": 0.0,
+      "IsolationForest": 0.883,
+      "Residual 3σ": 0.983,
+      "CUSUM": 1.0,
+      "Z-score": 0.0
+    },
+    "deriva": {
+      "Reglas": 0.0,
+      "IsolationForest": 0.717,
+      "Residual 3σ": 1.0,
+      "CUSUM": 1.0,
+      "Z-score": 0.45
+    },
+    "replay": {
+      "Reglas": 0.0,
+      "IsolationForest": 0.717,
+      "Residual 3σ": 0.983,
+      "CUSUM": 0.9,
+      "Z-score": 0.017
+    },
+    "coherente": {
+      "Reglas": 0.0,
+      "IsolationForest": 0.55,
+      "Residual 3σ": 0.017,
+      "CUSUM": 0.117,
+      "Z-score": 0.0
+    }
+  },
+  "nota": "Una tasa solo indica detección si supera claramente la de sin_ataque."
+}

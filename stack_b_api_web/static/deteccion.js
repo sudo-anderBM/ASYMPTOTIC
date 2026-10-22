@@ -24,6 +24,28 @@ async function pedir(nombre, params = {}, signal) {
   return respuesta.json();
 }
 
+// Integridad: /api/health responde 503 si algún archivo cambió su huella SHA-256.
+async function cargarIntegridad() {
+  const chip = $("integridad-chip");
+  const texto = $("integridad-texto");
+  try {
+    const r = await fetch("/api/health", { cache: "no-store" });
+    const datos = await r.json();
+    if (r.ok && datos.integridad && datos.integridad.estado === "ok") {
+      texto.textContent = `Integridad verificada · ${datos.integridad.archivos} archivos SHA-256`;
+      chip.classList.remove("falla");
+    } else {
+      texto.textContent = "Integridad: archivos alterados";
+      chip.classList.add("falla");
+    }
+  } catch (_) {
+    texto.textContent = "Integridad: sin verificar";
+    chip.classList.add("falla");
+  }
+  chip.hidden = false;
+}
+cargarIntegridad();
+
 function parametros() {
   return {
     tipo: $("tipo").value,
@@ -493,6 +515,8 @@ async function cargarResumen() {
     
     try {
       const r = await fetch("/static/mock/sweep.json", { cache: "no-store" });
+      // Si la integridad falla, el ejemplo también se bloquea (503): no se muestra nada.
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
       resumen.datos = await r.json();
       resumen.deEjemplo = true;
     } catch (_) {
