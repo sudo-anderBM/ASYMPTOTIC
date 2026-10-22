@@ -189,3 +189,7 @@ body.demo-en-curso .filter-panel{outline:2px solid #ebb17b;outline-offset:4px;bo
 .balance-supuestos{margin:14px 0 0;font-size:10.5px;color:var(--muted)}
 .balance-error{margin:10px 0 0;font-size:12px;color:#803a16}
 @media(max-width:800px){.balance-columnas{grid-template-columns:1fr}.det-balance .panel-heading{flex-direction:column;align-items:flex-start}}
+/* Etiqueta de integridad SHA-256 en la barra superior */
+.integridad-chip{border:1px solid var(--line);border-radius:5px;padding:5px 9px}
+.integridad-chip.falla{border-color:#d2a184;background:#fff0e8;color:#803a16}
+.integridad-chip.falla .status-dot{background:#b3401b}
