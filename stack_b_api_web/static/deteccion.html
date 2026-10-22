@@ -92,7 +92,7 @@
       <h2 id="veredicto-frase" class="veredicto-frase" aria-live="polite">Cargando el escenario…</h2>
       <div class="v-tarjetas">
         <article class="v-tarjeta v-mala">
-          <p class="v-etiqueta">Reglas del kit</p>
+          <p class="v-etiqueta">Reglas del kit (sin OT)</p>
           <p class="v-cifra" id="v-reglas">—</p>
           <p class="v-nota" id="v-reglas-nota"></p>
         </article>
@@ -132,9 +132,9 @@
       </section>
 
       <aside id="explicacion" class="panel alert-panel det-explicacion" aria-labelledby="explicacion-titulo" aria-live="polite">
-        <p class="eyebrow">POR QUÉ SONÓ</p>
+        <p class="eyebrow">QUÉ DICE EL MODELO RESIDUAL</p>
         <h2 id="explicacion-titulo">Explicación de una alerta</h2>
-        <p id="explicacion-vacia">Haz clic en una marca de alerta de la gráfica (o selecciónala con Tab y pulsa Enter) para ver por qué se activó.</p>
+        <p id="explicacion-vacia">Haz clic en una marca de alerta de la gráfica (o selecciónala con Tab y pulsa Enter) para ver qué esperaba el modelo residual en esa hora y cuánto se midió.</p>
         <div id="explicacion-contenido" hidden>
           <p class="exp-fecha" id="exp-fecha"></p>
           <dl class="exp-datos">
@@ -151,7 +151,7 @@
 
     <section class="panel det-tabla-panel" aria-labelledby="tabla-titulo">
       <div class="panel-heading"><div><p class="eyebrow">COMPARACIÓN EN ESTE ESCENARIO</p><h2 id="tabla-titulo">Cinco detectores, mismo problema</h2></div></div>
-      <p class="panel-description">Resaltado: el detector que encontró todas las fugas con menos falsas alarmas; si empatan, el que dejó pasar menos agua y luego el de menor coste. El coste son milisegundos medidos de ajuste más predicción en una sola corrida.</p>
+      <p class="panel-description">Resaltado: el detector que encontró todas las fugas con menos falsas alarmas; si empatan, el que dejó pasar menos agua y luego el de menor coste. El coste es la mediana de varias repeticiones de aprender más revisar (cómo se midió: nota al final del resumen).</p>
       <div class="table-scroll" tabindex="0" role="region" aria-label="Tabla de detectores, desplazamiento horizontal disponible">
         <table>
           <caption class="sr-only">Resultados por detector en el escenario seleccionado</caption>
@@ -161,7 +161,7 @@
             <th scope="col" class="numeric">Horas hasta alertar</th>
             <th scope="col" class="numeric">Falsas alarmas / día</th>
             <th scope="col" class="numeric" id="th-exceso">Exceso no detectado</th>
-            <th scope="col" class="numeric">Coste · ms</th>
+            <th scope="col" class="numeric">Coste · ms (mediana)</th>
           </tr></thead>
           <tbody id="tabla-detectores"><tr><td colspan="6">Cargando…</td></tr></tbody>
         </table>
@@ -197,7 +197,7 @@
       <div class="panel-heading">
         <div><p class="eyebrow">RESUMEN DEL BARRIDO</p><h2 id="resumen-titulo">Detección según el tamaño de la fuga</h2></div>
         <div class="segmented-control" role="group" aria-label="Versión de los datos">
-          <button type="button" class="active" data-version="normal" aria-pressed="true">Datos del kit</button>
+          <button type="button" class="active" data-version="normal" aria-pressed="true">Datos normales</button>
           <button type="button" data-version="dificil" aria-pressed="false">Datos difíciles</button>
         </div>
       </div>

@@ -79,7 +79,9 @@ async function cargarDetectores() {
     const datos = await pedir("detectors");
     detectores.clear();
     for (const d of datos.detectores) {
-      detectores.set(d.id, { ...d, color: COLORES[d.id] || "#66766e" });
+      // Las reglas corren sin eventos OT, igual que los demás detectores (comparación justa).
+      const nombre = d.id === "1_reglas" ? `${d.nombre} (sin eventos OT)` : d.nombre;
+      detectores.set(d.id, { ...d, nombre, color: COLORES[d.id] || "#66766e" });
     }
     console.log("detectores:", datos.detectores.map((d) => d.nombre));
   } catch (error) {
@@ -98,13 +100,21 @@ function numero(valor) {
 }
 
 
+// Costo medido de cada detector: mediana de varias repeticiones del barrido
+// (results/sweep_*.json). No se usa la medición de una sola corrida de /api/scenario.
+function costeDe(d) {
+  const lista = resumen.datos && resumen.datos.normal;
+  const ref = lista && lista.find((x) => x.id === d.id);
+  return ref ? ref.fit_ms + ref.pred_ms : null;
+}
+
 function elegirMejor(lista) {
   const completos = lista.filter((d) => d.eventos_totales > 0 && d.eventos_detectados === d.eventos_totales);
   if (completos.length === 0) return null;
   completos.sort((a, b) =>
     (a.falsas_alarmas_dia - b.falsas_alarmas_dia) ||
     (a.exceso_no_detectado - b.exceso_no_detectado) ||
-    ((a.fit_ms + a.pred_ms) - (b.fit_ms + b.pred_ms)));
+    ((costeDe(a) ?? 0) - (costeDe(b) ?? 0)));
   return completos[0].id;
 }
 
@@ -154,7 +164,7 @@ function pintarTabla(datos) {
       celda(numero(d.horas_hasta_alerta), true),
       celda(numero(d.falsas_alarmas_dia), true),
       celda(numero(d.exceso_no_detectado), true),
-      celda(numero(d.fit_ms + d.pred_ms), true),
+      celda(numero(costeDe(d)), true),
     );
     cuerpo.append(fila);
   }
@@ -494,6 +504,11 @@ async function cargarResumen() {
     }
   }
   pintarResumen();
+  // Con el barrido cargado, el costo de la tabla y del veredicto pasa a las medianas medidas.
+  if (ultimoEscenario) {
+    pintarTabla(ultimoEscenario);
+    pintarVeredicto(ultimoEscenario);
+  }
 }
 
 function recomendado(lista, indice) {
@@ -527,6 +542,12 @@ function textoRecomendacion(datos, lista) {
     }
   }
   return `Ningún detector logra ${meta} en este barrido.`;
+}
+
+function repeticiones(m) {
+  if (m.reps) return m.reps;
+  const encontrado = /(\d+) repeticiones/.exec(m.nota || "");
+  return encontrado ? encontrado[1] : "varias";
 }
 
 function pintarResumen() {
@@ -604,7 +625,8 @@ function pintarResumen() {
   const m = datos.meta;
   $("resumen-meta").textContent = resumen.deEjemplo
     ? "Barrido de EJEMPLO (valores no medidos): falta generar results/ con python -m greenai.sweep. Datos simulados."
-    : `${m.nota} Generado: ${m.generado} · equipo: ${m.equipo} · Python ${m.python}.`;
+    : `Costo de cada detector: mediana de ${repeticiones(m)} repeticiones, con aprender y revisar medidos por separado y sin contar la lectura de datos. ` +
+      `Equipo: ${m.equipo} · Python ${m.python}${m.sklearn ? ` · scikit-learn ${m.sklearn}` : ""} · generado ${m.generado}. Datos simulados.`;
 }
 
 for (const boton of document.querySelectorAll("[data-version]")) {
@@ -663,8 +685,8 @@ function pintarVeredicto(datos) {
   const idMejor = elegirMejor(datos.detectores);
   const mejor = datos.detectores.find((d) => d.id === idMejor) || null;
   const nombreMejor = mejor ? (detectores.get(mejor.id) || { nombre: mejor.id }).nombre : null;
-  const coste = (d) => d.fit_ms + d.pred_ms;
-  const masCaro = datos.detectores.reduce((a, b) => (coste(b) > coste(a) ? b : a), datos.detectores[0]);
+  const coste = costeDe;
+  const masCaro = datos.detectores.reduce((a, b) => ((coste(b) ?? -1) > (coste(a) ?? -1) ? b : a), datos.detectores[0]);
 
   if (p.magnitud === 0) {
     frase($("veredicto-frase"), [["Sin problema inyectado en " + p.sitio + ": "], ["cualquier alerta aquí es una falsa alarma", true], ["."]]);
@@ -726,13 +748,16 @@ function pintarVeredicto(datos) {
     : "ningún detector la cortó a tiempo en todos los eventos";
 
   
-  if (mejor) {
+  if (mejor && coste(mejor) === null) {
+    $("v-coste").textContent = "—";
+    $("v-coste-nota").textContent = "cargando las mediciones del barrido…";
+  } else if (mejor) {
     animarNumero($("v-coste"), coste(mejor), (v) => `${numero(v)} ms`);
     const veces = coste(masCaro) / Math.max(coste(mejor), 0.01);
     const nombreCaro = (detectores.get(masCaro.id) || { nombre: masCaro.id }).nombre;
     $("v-coste-nota").textContent = masCaro.id === mejor.id
       ? "es también el más caro de los cinco"
-      : `${nombreCaro}: ${numero(coste(masCaro))} ms (${numero(veces)}× más)`;
+      : `${nombreCaro}: ${numero(coste(masCaro))} ms (${numero(veces)}× más) · mediana de repeticiones`;
   } else {
     $("v-coste").textContent = "—";
     $("v-coste-nota").textContent = "sin detector recomendado en este escenario";
@@ -858,7 +883,7 @@ async function reproducirDemo() {
     if (marca) {
       desplazarA($("grafica-titulo"));
       await mostrarExplicacion(marca);
-      subtitulo(3, `¿Por qué sonó? ${$("exp-texto").textContent}`);
+      subtitulo(3, `Qué dice el modelo residual en esa hora: ${$("exp-texto").textContent}`);
     } else {
       subtitulo(3, "Cada alerta se puede abrir para ver lo observado frente a lo esperado por el modelo.");
     }
@@ -869,10 +894,10 @@ async function reproducirDemo() {
     const completos = e.detectores.filter((d) => d.eventos_totales > 0 && d.eventos_detectados === d.eventos_totales).length;
     const iforest = e.detectores.find((d) => d.id === "2_isolation_forest");
     const mejor30 = e.detectores.find((d) => d.id === elegirMejor(e.detectores));
-    const coste = (d) => d.fit_ms + d.pred_ms;
+    const coste = costeDe;
     let texto4 = `Con una fuga del 30 %, ${completos} de ${e.detectores.length} detectores ven todos los eventos.`;
-    if (iforest && mejor30 && mejor30.id !== iforest.id) {
-      texto4 += ` IsolationForest da ${numero(iforest.falsas_alarmas_dia)} falsas alarmas al día y cuesta ${numero(coste(iforest) / Math.max(coste(mejor30), 0.01))}× más cómputo que ${nombreDetector(mejor30.id)}.`;
+    if (iforest && mejor30 && mejor30.id !== iforest.id && coste(iforest) !== null && coste(mejor30) !== null) {
+      texto4 += ` IsolationForest da ${numero(iforest.falsas_alarmas_dia)} falsas alarmas al día y cuesta ${numero(coste(iforest) / Math.max(coste(mejor30), 0.01))}× más tiempo de cómputo que ${nombreDetector(mejor30.id)} (mediana de repeticiones).`;
     }
     subtitulo(4, texto4);
     desplazarA($("veredicto"));
@@ -900,8 +925,8 @@ async function reproducirDemo() {
         ? `${cifra(b.beneficio.evitado)} L de agua`
         : `${cifra(b.beneficio.kwh_evitados)} kWh`;
       subtitulo(6, `Balance neto: si una fuga del 10 % en SIM-B tardara ${b.supuestos.dias_sin_detector} días en descubrirse, se perderían ${evita}. ` +
-        `Tener el detector encendido todo un año cuesta ${cifra(c.g_co2e)} g de CO₂e. ` +
-        (b.balance_positivo ? "Ahorra mucho más de lo que gasta." : "En este caso no compensa."));
+        `Suponiendo ${b.supuestos.watts} W (no medidos), tener el detector encendido todo un año cuesta unos ${cifra(c.g_co2e)} g de CO₂e. ` +
+        (b.balance_positivo ? "Evita mucho más de lo que gasta." : "En este caso no compensa."));
     } else {
       subtitulo(6, "Balance neto: comparamos lo que cuesta el detector al año con lo que evita perder.");
     }
@@ -951,7 +976,7 @@ cargarDetectores().then(() => {
 
 const METRICAS = [
   { clave: "pue", nombre: "PUE", unidad: "", ayuda: "Energía total ÷ energía de los servidores. Lo ideal es 1." },
-  { clave: "wue_l_kwh", nombre: "WUE", unidad: "L/kWh", ayuda: "Litros de agua por cada kWh que usan los servidores." },
+  { clave: "wue_l_kwh", nombre: "WUE pedagógica del kit", unidad: "L/kWh", ayuda: "Agua tomada en el sitio por kWh de servidores. No incluye el agua de generar la electricidad." },
   { clave: "cue_kg_kwh", nombre: "CUE", unidad: "kg CO₂e/kWh", ayuda: "CO₂e por cada kWh de los servidores (PUE × factor de la red)." },
 ];
 
@@ -1028,7 +1053,7 @@ function pintarMetricas(m) {
 
 // Panel Balance neto
 
-const BALANCE_DE_EJEMPLO = true;
+const BALANCE_DE_EJEMPLO = false;
 
 const SUPUESTOS = { watts: 30, factor: 0.438, l_por_kwh: 1.2 };
 
@@ -1094,7 +1119,6 @@ function pintarBalance(b) {
     filaDato("Tiempo de CPU", `${cifra(costo.segundos_cpu)} s`),
     filaDato("Energía", `${cifra(costo.kwh)} kWh`),
     filaDato("Emisiones", `${cifra(costo.g_co2e)} g CO₂e`),
-    filaDato("Agua indirecta", `${cifra(costo.l_agua_indirecta)} L`),
   );
 
   if (ben.unidad === "L") {
@@ -1113,14 +1137,20 @@ function pintarBalance(b) {
   }
 
   const sello = $("balance-sello");
-  sello.textContent = b.balance_positivo ? "✓ Balance positivo" : "Balance negativo";
-  sello.className = `balance-sello ${b.balance_positivo ? "positivo" : "negativo"}`;
+  if (b.balance_positivo === null || b.balance_positivo === undefined) {
+    sello.textContent = "Sin problema que evitar";
+    sello.className = "balance-sello neutro";
+  } else {
+    sello.textContent = b.balance_positivo ? "✓ Balance positivo" : "Balance negativo";
+    sello.className = `balance-sello ${b.balance_positivo ? "positivo" : "negativo"}`;
+  }
   sello.hidden = false;
 
   const s = b.supuestos;
   $("balance-supuestos").textContent =
-    `Supuestos: equipo de ${s.watts} W, ${s.revisiones_por_anio} revisiones y ${s.reentrenos_por_anio} reentrenamientos al año, ` +
-    `factor de la red ${s.factor_kg_co2e_kwh} kg CO₂e/kWh, ${s.agua_indirecta_l_kwh} L de agua por kWh generado.` +
+    `Supuestos (no medidos): potencia supuesta de ${s.watts} W, ${s.revisiones_por_anio} revisiones y ${s.reentrenos_por_anio} reentrenamientos al año, ` +
+    `factor de emisión ${s.factor_kg_co2e_kwh} kg CO₂e/kWh (${s.factor_contexto || "red eléctrica de México, aviso 2023"}). ` +
+    "Medido: solo el tiempo de cómputo. No incluye fabricación, red ni agua." +
     (BALANCE_DE_EJEMPLO ? " (Datos de ejemplo: aún no cambian con los controles.)" : "");
 }
 
