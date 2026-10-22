@@ -20,11 +20,11 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 from common.cifox import flagged, load_data, metrics  # noqa: E402
+from greenai import balance as balance_calc  # noqa: E402
 from greenai import service  # noqa: E402
 
 STATIC = Path(__file__).resolve().parent / "static"
 DATA_FILE = ROOT / "data" / "operaciones_simuladas.csv"
-BALANCE_MOCK = STATIC / "mock" / "balance.json"
 FILTER_COLUMNS = ("site_id", "cooling_type", "split")
 
 app = FastAPI(
@@ -203,31 +203,38 @@ def api_sweep(tipo: str | None = Query(default=None, max_length=40)):
 
 
 # ---------------------------------------------------------------------------
-# Balance de energia y agua.
-# TEMPORAL: sirve el archivo de ejemplo static/mock/balance.json. Cuando exista
-# el calculo real, reemplazar solo el cuerpo de `_leer_balance` y conservar la
-# forma del JSON (contrato con el frontend).
+# Balance neto: costo anual del detector frente a lo que evita (estimado).
 # ---------------------------------------------------------------------------
-def _leer_balance() -> dict[str, Any]:
+def _num(valor, nombre: str, lo: float, hi: float) -> float:
     try:
-        with open(BALANCE_MOCK, encoding="utf-8") as f:
-            data = json.load(f)
-    except FileNotFoundError:
-        raise HTTPException(
-            status_code=503, detail="Falta el archivo de ejemplo static/mock/balance.json"
-        ) from None
-    except (OSError, ValueError):
-        raise HTTPException(
-            status_code=503, detail="El archivo static/mock/balance.json no es un JSON válido"
-        ) from None
-    if not isinstance(data, dict):
-        raise HTTPException(
-            status_code=503, detail="static/mock/balance.json debe ser un objeto JSON"
-        )
-    data["simulated"] = True  # contrato: siempre simulated: true
-    return data
+        x = float(valor)
+    except (TypeError, ValueError):
+        raise ValueError(f"{nombre} debe ser un número entre {lo:g} y {hi:g}.") from None
+    if not math.isfinite(x) or not lo <= x <= hi:
+        raise ValueError(f"{nombre} debe ser un número entre {lo:g} y {hi:g}.")
+    return x
+
+
+def _balance(tipo, magnitud, sitio, semilla, dias, watts, factor, l_por_kwh):
+    tipo, m, sitio, s = service.parsear(tipo, magnitud, sitio, semilla)
+    return balance_calc.calcular(
+        tipo, m, sitio, s,
+        _num(dias, "dias", 1, 365),
+        _num(watts, "watts", 1, 1000),
+        _num(factor, "factor", 0, 2),
+        _num(l_por_kwh, "l_por_kwh", 0, 10),
+    )
 
 
 @app.get("/api/balance")
-def api_balance():
-    return _safe(_leer_balance())
+def api_balance(
+    tipo: str | None = Query(default=None, max_length=40),
+    magnitud: str | None = Query(default=None, max_length=20),
+    sitio: str | None = Query(default=None, max_length=40),
+    semilla: str | None = Query(default="1", max_length=20),
+    dias: str | None = Query(default="7", max_length=20),
+    watts: str | None = Query(default="30", max_length=20),
+    factor: str | None = Query(default="0.444", max_length=20),
+    l_por_kwh: str | None = Query(default="1.2", max_length=20),
+):
+    return _422(_balance, tipo, magnitud, sitio, semilla, dias, watts, factor, l_por_kwh)
