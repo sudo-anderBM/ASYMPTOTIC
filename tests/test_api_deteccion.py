@@ -41,3 +41,28 @@ def test_errores_422_con_detail_texto():
 def test_sweep_sin_archivo_o_con_archivo():
     assert c.get("/api/sweep?tipo=fuga").status_code in (200, 503)
     assert c.get("/api/sweep?tipo=x").status_code == 422
+
+
+def test_magnitud_cero_sin_eventos():
+    j = c.get("/api/scenario?tipo=fuga&magnitud=0&sitio=SIM-A&semilla=1").json()
+    assert j["eventos_reales"] == []
+    assert all(d["eventos_totales"] == 0 for d in j["detectores"])
+
+
+def _m(q):
+    return c.get(f"/api/scenario?{q}").json()["metricas"]
+
+
+def test_metricas_cero_iguales():
+    m = _m("tipo=fuga&magnitud=0&sitio=SIM-B&semilla=1")
+    assert m["sin_problema"] == m["con_problema"]
+
+
+def test_metricas_fuga_sube_wue():
+    m = _m("tipo=fuga&magnitud=0.5&sitio=SIM-B&semilla=1")
+    assert m["con_problema"]["wue_l_kwh"] > m["sin_problema"]["wue_l_kwh"]
+
+
+def test_metricas_ineficiencia_sube_pue():
+    m = _m("tipo=ineficiencia&magnitud=0.5&sitio=SIM-A&semilla=1")
+    assert m["con_problema"]["pue"] > m["sin_problema"]["pue"]    
