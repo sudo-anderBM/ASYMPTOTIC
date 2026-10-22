@@ -132,3 +132,24 @@ tr.mejor:hover{background:#e1eee5}
 .det-alerta.activa{stroke:#ebb17b;stroke-width:3}
 body.demo-en-curso .filter-panel{outline:2px solid #ebb17b;outline-offset:4px;border-radius:13px}
 @media(max-width:700px){.demo-barra{grid-template-columns:1fr;bottom:10px}.demo-texto{font-size:13px}}
+
+/* A2 · Tarjetas de métricas */
+.metricas{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:22px 25px;margin:0 0 18px}
+.metricas-cabecera{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap}
+.metricas .eyebrow{font-size:9px;margin-bottom:5px}
+.metricas h2{font-size:20px;font-weight:650;letter-spacing:-.5px;margin:0}
+.metricas-ayuda{margin:0;font-size:11px;color:var(--muted)}
+.m-tarjetas{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:16px}
+.m-tarjeta{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:16px 18px;min-width:0}
+.m-nombre{margin:0;font-size:11px;font-weight:750;letter-spacing:1px;color:var(--green)}
+.m-valores{margin:8px 0 4px;display:flex;align-items:baseline;flex-wrap:wrap;gap:6px;font-variant-numeric:tabular-nums}
+.m-antes{font-size:18px;color:var(--muted)}
+.m-flecha{color:var(--muted)}
+.m-valores strong{font-size:clamp(24px,2.2vw,32px);font-weight:650;letter-spacing:-1px;color:var(--ink)}
+.m-unidad{font-size:11px;color:var(--muted)}
+.m-cambio{margin:0 0 8px;font-size:12px;font-weight:650;color:var(--muted)}
+.m-cambio.sube{color:#b86629}
+.m-cambio.baja{color:var(--green)}
+.m-ayuda{margin:0;font-size:10.5px;line-height:1.5;color:var(--muted)}
+.metricas-nota{margin:14px 0 0;font-size:10px;color:var(--muted)}
+@media(max-width:800px){.m-tarjetas{grid-template-columns:1fr}}

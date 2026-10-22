@@ -48,7 +48,8 @@ async function cargarEscenario() {
     ultimoEscenario = datos;
     pintarTabla(datos); 
     pintarGrafica(datos);
-    pintarVeredicto(datos);   
+    pintarVeredicto(datos); 
+    pintarMetricas(datos.metricas);  
     limpiarExplicacion();       
     $("estado").textContent = "Actualizado · Datos simulados";
   } catch (error) {
@@ -925,3 +926,82 @@ cargarDetectores().then(() => {
   cargarEscenario();
   cargarResumen();
 });
+
+// ---------- A2 · Tarjetas de métricas (PUE, WUE, CUE) ----------
+
+const METRICAS = [
+  { clave: "pue", nombre: "PUE", unidad: "", ayuda: "Energía total ÷ energía de los servidores. Lo ideal es 1." },
+  { clave: "wue_l_kwh", nombre: "WUE", unidad: "L/kWh", ayuda: "Litros de agua por cada kWh que usan los servidores." },
+  { clave: "cue_kg_kwh", nombre: "CUE", unidad: "kg CO₂e/kWh", ayuda: "CO₂e por cada kWh de los servidores (PUE × factor de la red)." },
+];
+
+const formato3 = new Intl.NumberFormat("es-MX", { minimumFractionDigits: 3, maximumFractionDigits: 3 });
+
+function valorMetrica(valor) {
+  return valor === null || valor === undefined ? "—" : formato3.format(valor);
+}
+
+function pintarMetricas(m) {
+  const seccion = $("metricas");
+  if (!m || !m.sin_problema || !m.con_problema) {
+    seccion.hidden = true;          // la API todavía no manda métricas
+    return;
+  }
+
+  const contenedor = $("m-tarjetas");
+  contenedor.replaceChildren();
+
+  for (const metrica of METRICAS) {
+    const antes = m.sin_problema[metrica.clave];
+    const despues = m.con_problema[metrica.clave];
+
+    const tarjeta = document.createElement("article");
+    tarjeta.className = "m-tarjeta";
+
+    const nombre = document.createElement("p");
+    nombre.className = "m-nombre";
+    nombre.textContent = metrica.nombre;
+
+    const valores = document.createElement("p");
+    valores.className = "m-valores";
+    const vAntes = document.createElement("span");
+    vAntes.className = "m-antes";
+    vAntes.textContent = valorMetrica(antes);
+    const flecha = document.createElement("span");
+    flecha.className = "m-flecha";
+    flecha.setAttribute("aria-hidden", "true");
+    flecha.textContent = "→";
+    const vDespues = document.createElement("strong");
+    vDespues.textContent = valorMetrica(despues);
+    const unidad = document.createElement("span");
+    unidad.className = "m-unidad";
+    unidad.textContent = metrica.unidad;
+    valores.append(vAntes, flecha, vDespues, unidad);
+
+    const cambio = document.createElement("p");
+    cambio.className = "m-cambio";
+    if (!antes || despues === null || despues === undefined) {
+      cambio.textContent = "—";
+    } else {
+      const pct = ((despues - antes) / antes) * 100;
+      if (Math.abs(pct) < 0.05) {
+        cambio.textContent = "Sin cambio";
+      } else {
+        cambio.textContent = `${pct > 0 ? "+" : ""}${numero(pct)} % con el problema`;
+        cambio.classList.add(pct > 0 ? "sube" : "baja");
+      }
+    }
+
+    const ayuda = document.createElement("p");
+    ayuda.className = "m-ayuda";
+    ayuda.textContent = metrica.ayuda;
+
+    tarjeta.append(nombre, valores, cambio, ayuda);
+    contenedor.append(tarjeta);
+  }
+
+  $("metricas-nota").textContent =
+    `CUE = PUE × ${formato3.format(m.factor_kg_co2e_kwh)} kg CO₂e/kWh (factor de la red eléctrica de México). ` +
+    "Calculado con las 96 horas de evaluación del sitio elegido.";
+  seccion.hidden = false;
+}
