@@ -19,7 +19,7 @@ VARIABLE = {"fuga": ("water_l", "L"), "ineficiencia": ("energy_total_kwh", "kWh"
 RESIDUAL = "3_residual_3sigma"
 
 # kg CO2e por kWh de la red electrica nacional.
-# Valor del aviso de 2023; verificar el de 2024 en gob.mx (SEMARNAT/CRE) y anotar fuente y año.
+# Sistema Eléctrico Nacional 2024, aviso SEMARNAT 28/02/2025
 FACTOR_RED_KG_KWH = 0.444
 
 DETECTORES = [
