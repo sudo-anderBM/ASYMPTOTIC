@@ -1,5 +1,9 @@
 # ASYMPTOTIC
 
+## Demo
+
+[Ver demostración de ASYMPTOTIC](video/demo_asymptotic.mp4)
+
 https://docs.google.com/presentation/d/1uDZ6NeL0UEcGwmXtqlLdBFSookYxiUzSaOuwBPUOJVM/edit?slide=id.p1#slide=id.p1
 
 <p align="center">
