@@ -1,45 +1,38 @@
+﻿import unittest
 from fastapi.testclient import TestClient
-
-from stack_b_api_web import main
-
-client = TestClient(main.app)
+from stack_b_api_web.main import app
 
 
-def test_balance_devuelve_ejemplo_simulado():
-    r = client.get("/api/balance")
-    assert r.status_code == 200
-    assert r.json()["simulated"] is True
+class TestBalance(unittest.TestCase):
+    def setUp(self):
+        self.client = TestClient(app)
+        self.Q = "tipo=fuga&magnitud=0.1&sitio=SIM-B&semilla=1"
+
+    def test_balance_real_cambia_con_dias(self):
+        a = self.client.get(f"/api/balance?{self.Q}&dias=7").json()
+        b = self.client.get(f"/api/balance?{self.Q}&dias=14").json()
+        
+        self.assertTrue(a["simulated"])
+        self.assertGreater(b["beneficio"]["evitado"], a["beneficio"]["evitado"])
+        self.assertGreater(a["beneficio"]["evitado"], 0)
+        self.assertLess(a["costo_detector_anual"]["g_co2e"], 0.01)
+        self.assertTrue(a["balance_positivo"])
+
+    def test_balance_ineficiencia_da_kwh(self):
+        j = self.client.get("/api/balance?tipo=ineficiencia&magnitud=0.2&sitio=SIM-A&semilla=1").json()
+        
+        self.assertEqual(j["beneficio"]["unidad"], "kWh")
+        self.assertGreater(j["beneficio"]["kwh_evitados"], 0)
+        self.assertGreater(j["beneficio"]["kg_co2e_evitados"], 0)
+
+    def test_balance_422_con_detail_texto(self):
+        for q in [f"{self.Q}&dias=0", f"{self.Q}&watts=5000", f"{self.Q}&factor=3", f"{self.Q}&l_por_kwh=-1",
+                  "tipo=fuga", f"{self.Q}&dias=abc"]:
+            r = self.client.get(f"/api/balance?{q}")
+            
+            self.assertEqual(r.status_code, 422)
+            self.assertIsInstance(r.json()["detail"], str)
 
 
-def test_balance_fuerza_simulated_true(monkeypatch, tmp_path):
-    archivo = tmp_path / "balance.json"
-    archivo.write_text('{"simulated": false, "x": 1}', encoding="utf-8")
-    monkeypatch.setattr(main, "BALANCE_MOCK", archivo)
-    r = client.get("/api/balance")
-    assert r.status_code == 200
-    assert r.json() == {"simulated": True, "x": 1}
-
-
-def test_balance_sin_archivo_da_503_con_texto(monkeypatch, tmp_path):
-    monkeypatch.setattr(main, "BALANCE_MOCK", tmp_path / "no_existe.json")
-    r = client.get("/api/balance")
-    assert r.status_code == 503
-    assert isinstance(r.json()["detail"], str)
-
-
-def test_balance_json_invalido_da_503(monkeypatch, tmp_path):
-    archivo = tmp_path / "balance.json"
-    archivo.write_text("{esto no es json", encoding="utf-8")
-    monkeypatch.setattr(main, "BALANCE_MOCK", archivo)
-    r = client.get("/api/balance")
-    assert r.status_code == 503
-    assert isinstance(r.json()["detail"], str)
-
-
-def test_balance_que_no_es_objeto_da_503(monkeypatch, tmp_path):
-    archivo = tmp_path / "balance.json"
-    archivo.write_text("[1, 2, 3]", encoding="utf-8")
-    monkeypatch.setattr(main, "BALANCE_MOCK", archivo)
-    r = client.get("/api/balance")
-    assert r.status_code == 503
-    assert isinstance(r.json()["detail"], str)
+if __name__ == "__main__":
+    unittest.main()

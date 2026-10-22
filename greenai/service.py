@@ -18,6 +18,10 @@ RES = Path(__file__).resolve().parents[1] / "results"
 VARIABLE = {"fuga": ("water_l", "L"), "ineficiencia": ("energy_total_kwh", "kWh")}
 RESIDUAL = "3_residual_3sigma"
 
+# kg CO2e por kWh de la red electrica nacional.
+# Sistema Eléctrico Nacional 2024, aviso SEMARNAT 28/02/2025
+FACTOR_RED_KG_KWH = 0.444
+
 DETECTORES = [
     {"id": "1_reglas", "nombre": "Reglas del kit",
      "descripcion": "Umbrales fijos: PUE > 1.6, agua > 1.5 L/kWh, entrada > 29 °C", "entrena": False},
@@ -78,7 +82,19 @@ def _modelos(semilla):
 
 @lru_cache(maxsize=64)
 def _mod(tipo, magnitud, sitio, semilla):
+    if magnitud == 0:                                  # B1: sin problema, sin eventos
+        return _base(semilla).copy(), []
     return inyectar(_base(semilla), tipo, magnitud, [sitio], semilla)
+
+
+def _metricas(df, sitio) -> dict:
+    """PUE, WUE y CUE con sumas sobre las 96 h de evaluacion del sitio."""
+    g = df[(df.site_id == sitio) & (df.split == "evaluacion")]
+    it = float(g.energy_it_kwh.sum())
+    pue = float(g.energy_total_kwh.sum()) / it
+    wue = float(g.water_l.sum()) / it
+    return {"pue": round(pue, 3), "wue_l_kwh": round(wue, 3),
+            "cue_kg_kwh": round(pue * FACTOR_RED_KG_KWH, 3)}
 
 
 def escenario(tipo, magnitud, sitio, semilla) -> dict:
@@ -113,6 +129,9 @@ def escenario(tipo, magnitud, sitio, semilla) -> dict:
             "parametros": {"tipo": tipo, "magnitud": m, "sitio": sitio, "semilla": s},
             "variable": var, "unidad": unidad, "serie": serie,
             "eventos_reales": [{"inicio": iso(e["inicio"]), "fin": iso(e["fin"])} for e in eventos],
+            "metricas": {"factor_kg_co2e_kwh": FACTOR_RED_KG_KWH,
+                         "sin_problema": _metricas(base, sitio),
+                         "con_problema": _metricas(mod, sitio)},
             "detectores": dets}
 
 

@@ -8,6 +8,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 import numpy as np
+import pandas as pd
 
 from greenai.base_data import generar_base
 from greenai.bench import medir, wilson
@@ -58,7 +59,8 @@ def _bloque(acc, costo):
         fa = [round(float(np.mean(d[m][2])), 3) for m in MAGS]
         out.append({"id": c.name, "deteccion": [round(x, 3) for x in det],
                     "deteccion_ic95": ic, "falsas_alarmas_dia": fa,
-                    "fit_ms": costo[c.name][0], "pred_ms": costo[c.name][1]})
+                    "fit_ms": costo[c.name][0], "pred_ms": costo[c.name][1],
+                    "fit_desv_ms": costo[c.name][2], "pred_desv_ms": costo[c.name][3]})
     return out
 
 
@@ -70,7 +72,9 @@ def _costo(reps):
     for c in ALL:
         _, F, P, _, _ = medir(c, False, tr, te, reps, 2)
         out[c.name] = (round(float(np.median(F[:, 0])) * 1e3, 2),
-                       round(float(np.median(P[:, 0])) * 1e3, 2))
+                       round(float(np.median(P[:, 0])) * 1e3, 2),
+                       round(float(np.std(F[:, 0], ddof=1)) * 1e3, 2) if len(F) > 1 else 0.0,
+                       round(float(np.std(P[:, 0], ddof=1)) * 1e3, 2) if len(P) > 1 else 0.0)
     return out
 
 
@@ -91,7 +95,11 @@ def main():
                          "generado": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
                          "equipo": platform.platform(),
                          "python": sys.version.split()[0],
+                         "numpy": np.__version__,
+                         "pandas": pd.__version__,
                          "sklearn": sklearn.__version__,
+                         "filas_ref": 216,
+                         "filas_eval": 288,
                          "nota": "Tiempos medidos en este equipo (mediana, datos normales, "
                                  f"{a.reps} repeticiones). Datos simulados."}}
         (RES / f"sweep_{tipo}.json").write_text(

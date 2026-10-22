@@ -11,7 +11,7 @@ from greenai.detectors import ALL
 
 LABELS = ["scenario", "simulated_anomaly"]
 WATTS = [15, 30, 65]            # supuestos editables, NO medidos
-GCO2 = [100, 300, 600]
+GCO2 = [444]                    # México, SEN 2024, aviso SEMARNAT 28/02/2025
 RES = Path("results")
 
 

@@ -55,7 +55,9 @@
         0.0
       ],
       "fit_ms": 0.0,
-      "pred_ms": 0.25
+      "pred_ms": 0.2,
+      "fit_desv_ms": 0.0,
+      "pred_desv_ms": 0.0
     },
     {
       "id": "2_isolation_forest",
@@ -101,8 +103,10 @@
         1.275,
         1.275
       ],
-      "fit_ms": 95.58,
-      "pred_ms": 7.23
+      "fit_ms": 92.55,
+      "pred_ms": 7.54,
+      "fit_desv_ms": 1.67,
+      "pred_desv_ms": 0.68
     },
     {
       "id": "3_residual_3sigma",
@@ -148,8 +152,10 @@
         0.008,
         0.008
       ],
-      "fit_ms": 2.59,
-      "pred_ms": 2.52
+      "fit_ms": 2.77,
+      "pred_ms": 2.57,
+      "fit_desv_ms": 0.18,
+      "pred_desv_ms": 0.14
     },
     {
       "id": "4_residual_cusum",
@@ -195,8 +201,10 @@
         0.208,
         0.208
       ],
-      "fit_ms": 2.59,
-      "pred_ms": 3.96
+      "fit_ms": 2.72,
+      "pred_ms": 4.22,
+      "fit_desv_ms": 0.08,
+      "pred_desv_ms": 0.28
     },
     {
       "id": "5_zscore_simple",
@@ -242,8 +250,10 @@
         0.0,
         0.0
       ],
-      "fit_ms": 0.94,
-      "pred_ms": 0.35
+      "fit_ms": 0.93,
+      "pred_ms": 0.32,
+      "fit_desv_ms": 0.08,
+      "pred_desv_ms": 0.01
     }
   ],
   "dificil": [
@@ -292,7 +302,9 @@
         0.0
       ],
       "fit_ms": 0.0,
-      "pred_ms": 0.25
+      "pred_ms": 0.2,
+      "fit_desv_ms": 0.0,
+      "pred_desv_ms": 0.0
     },
     {
       "id": "2_isolation_forest",
@@ -338,8 +350,10 @@
         1.25,
         1.25
       ],
-      "fit_ms": 95.58,
-      "pred_ms": 7.23
+      "fit_ms": 92.55,
+      "pred_ms": 7.54,
+      "fit_desv_ms": 1.67,
+      "pred_desv_ms": 0.68
     },
     {
       "id": "3_residual_3sigma",
@@ -385,8 +399,10 @@
         0.058,
         0.058
       ],
-      "fit_ms": 2.59,
-      "pred_ms": 2.52
+      "fit_ms": 2.77,
+      "pred_ms": 2.57,
+      "fit_desv_ms": 0.18,
+      "pred_desv_ms": 0.14
     },
     {
       "id": "4_residual_cusum",
@@ -432,8 +448,10 @@
         0.308,
         0.308
       ],
-      "fit_ms": 2.59,
-      "pred_ms": 3.96
+      "fit_ms": 2.72,
+      "pred_ms": 4.22,
+      "fit_desv_ms": 0.08,
+      "pred_desv_ms": 0.28
     },
     {
       "id": "5_zscore_simple",
@@ -479,17 +497,23 @@
         0.008,
         0.008
       ],
-      "fit_ms": 0.94,
-      "pred_ms": 0.35
+      "fit_ms": 0.93,
+      "pred_ms": 0.32,
+      "fit_desv_ms": 0.08,
+      "pred_desv_ms": 0.01
     }
   ],
   "meta": {
     "semillas": 10,
     "eventos_por_punto": 90,
-    "generado": "2026-10-21T08:34:20Z",
+    "generado": "2026-10-22T10:45:18Z",
     "equipo": "Windows-11-10.0.26200-SP0",
-    "python": "3.13.12",
-    "sklearn": "1.9.1",
+    "python": "3.12.10",
+    "numpy": "2.3.5",
+    "pandas": "2.2.3",
+    "sklearn": "1.8.0",
+    "filas_ref": 216,
+    "filas_eval": 288,
     "nota": "Tiempos medidos en este equipo (mediana, datos normales, 10 repeticiones). Datos simulados."
   }
 }
