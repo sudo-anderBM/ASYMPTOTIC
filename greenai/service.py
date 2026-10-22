@@ -20,7 +20,7 @@ RESIDUAL = "3_residual_3sigma"
 
 # kg CO2e por kWh de la red electrica nacional.
 # Valor del aviso de 2023; verificar el de 2024 en gob.mx (SEMARNAT/CRE) y anotar fuente y año.
-FACTOR_RED_KG_KWH = 0.438
+FACTOR_RED_KG_KWH = 0.444
 
 DETECTORES = [
     {"id": "1_reglas", "nombre": "Reglas del kit",

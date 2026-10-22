@@ -1030,7 +1030,7 @@ function pintarMetricas(m) {
 
 const BALANCE_DE_EJEMPLO = true;
 
-const SUPUESTOS = { watts: 30, factor: 0.438, l_por_kwh: 1.2 };
+const SUPUESTOS = { watts: 30, factor: 0.444, l_por_kwh: 1.2 };
 
 const formatoSig = new Intl.NumberFormat("es-MX", { maximumSignificantDigits: 2 });
 const formatoEntero = new Intl.NumberFormat("es-MX", { maximumFractionDigits: 0 });

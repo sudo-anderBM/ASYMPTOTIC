@@ -234,7 +234,7 @@ def api_balance(
     semilla: str | None = Query(default="1", max_length=20),
     dias: str | None = Query(default="7", max_length=20),
     watts: str | None = Query(default="30", max_length=20),
-    factor: str | None = Query(default="0.438", max_length=20),
+    factor: str | None = Query(default="0.444", max_length=20),
     l_por_kwh: str | None = Query(default="1.2", max_length=20),
 ):
     return _422(_balance, tipo, magnitud, sitio, semilla, dias, watts, factor, l_por_kwh)
