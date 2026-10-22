@@ -1,5 +1,7 @@
 # ASYMPTOTIC
 
+https://docs.google.com/presentation/d/1uDZ6NeL0UEcGwmXtqlLdBFSookYxiUzSaOuwBPUOJVM/edit?slide=id.p1#slide=id.p1
+
 <p align="center">
   <strong>IA eficiente para centros de datos sostenibles</strong>
   <br>
