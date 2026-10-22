@@ -170,6 +170,7 @@ body.demo-en-curso .filter-panel{outline:2px solid #ebb17b;outline-offset:4px;bo
 .balance-sello{margin:0;padding:6px 12px;border-radius:999px;font-size:11px;font-weight:750;letter-spacing:.6px;white-space:nowrap}
 .balance-sello.positivo{background:#e5f4e4;color:#1f5a4c}
 .balance-sello.negativo{background:#fbebeb;color:#8a2f2f}
+.balance-sello.neutro{background:#f0efec;color:#5f6f68}
 .balance-dias{max-width:520px;margin:6px 0 16px}
 .balance-dias output{color:var(--ink);font-weight:700}
 .balance-columnas{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}

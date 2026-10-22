@@ -5,7 +5,7 @@ from greenai.sweep import _punto, _bloque, MAGS
 class TestSweep(unittest.TestCase):
     def test_punto_y_bloque_forma_y_rangos(self):
         acc = _punto("fuga", False, 2)
-        costo = {k: (1.0, 1.0) for k in acc}
+        costo = {k: (1.0, 1.0, 0.1, 0.1) for k in acc}   # mediana fit, pred y desviaciones
         b = _bloque(acc, costo)
         
         self.assertEqual(len(b), 5)
