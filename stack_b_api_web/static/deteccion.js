@@ -48,8 +48,10 @@ async function cargarEscenario() {
     ultimoEscenario = datos;
     pintarTabla(datos); 
     pintarGrafica(datos);
-    pintarVeredicto(datos);   
-    limpiarExplicacion();       
+    pintarVeredicto(datos); 
+    pintarMetricas(datos.metricas);  
+    limpiarExplicacion(); 
+    cargarBalance();      
     $("estado").textContent = "Actualizado · Datos simulados";
   } catch (error) {
     if (error.name === "AbortError") return;   
@@ -796,7 +798,7 @@ async function fijarEscenario({ sitio, tipo, magnitud, semilla }) {
 }
 
 const demo = { activa: false, turno: 0 };
-const PASOS_DEMO = 5;
+const PASOS_DEMO = 6;
 
 function esperar(ms) {
   const turno = demo.turno;
@@ -886,6 +888,25 @@ async function reproducirDemo() {
     subtitulo(5, `Con datos difíciles (ruido y relación no lineal): ${minuscula($("recomendacion").textContent)}`);
     await esperar(8000);
 
+    await fijarEscenario({ sitio: "SIM-B", tipo: "fuga", magnitud: 10, semilla: 1 });
+    $("dias").value = 7;
+    $("dias-valor").textContent = "7 días";
+    await cargarBalance();
+    desplazarA($("balance"));
+    const b = ultimoBalance;
+    if (b) {
+      const c = b.costo_detector_anual;
+      const evita = b.beneficio.unidad === "L"
+        ? `${cifra(b.beneficio.evitado)} L de agua`
+        : `${cifra(b.beneficio.kwh_evitados)} kWh`;
+      subtitulo(6, `Balance neto: si una fuga del 10 % en SIM-B tardara ${b.supuestos.dias_sin_detector} días en descubrirse, se perderían ${evita}. ` +
+        `Tener el detector encendido todo un año cuesta ${cifra(c.g_co2e)} g de CO₂e. ` +
+        (b.balance_positivo ? "Ahorra mucho más de lo que gasta." : "En este caso no compensa."));
+    } else {
+      subtitulo(6, "Balance neto: comparamos lo que cuesta el detector al año con lo que evita perder.");
+    }
+    await esperar(10000);
+
     $("demo-texto").textContent = "Fin de la demo. Ahora puedes mover los controles.";
     await esperar(3500);
     terminarDemo();
@@ -925,3 +946,186 @@ cargarDetectores().then(() => {
   cargarEscenario();
   cargarResumen();
 });
+
+// Tarjetas de métricas 
+
+const METRICAS = [
+  { clave: "pue", nombre: "PUE", unidad: "", ayuda: "Energía total ÷ energía de los servidores. Lo ideal es 1." },
+  { clave: "wue_l_kwh", nombre: "WUE", unidad: "L/kWh", ayuda: "Litros de agua por cada kWh que usan los servidores." },
+  { clave: "cue_kg_kwh", nombre: "CUE", unidad: "kg CO₂e/kWh", ayuda: "CO₂e por cada kWh de los servidores (PUE × factor de la red)." },
+];
+
+const formato3 = new Intl.NumberFormat("es-MX", { minimumFractionDigits: 3, maximumFractionDigits: 3 });
+
+function valorMetrica(valor) {
+  return valor === null || valor === undefined ? "—" : formato3.format(valor);
+}
+
+function pintarMetricas(m) {
+  const seccion = $("metricas");
+  if (!m || !m.sin_problema || !m.con_problema) {
+    seccion.hidden = true;          // la API todavía no manda métricas
+    return;
+  }
+
+  const contenedor = $("m-tarjetas");
+  contenedor.replaceChildren();
+
+  for (const metrica of METRICAS) {
+    const antes = m.sin_problema[metrica.clave];
+    const despues = m.con_problema[metrica.clave];
+
+    const tarjeta = document.createElement("article");
+    tarjeta.className = "m-tarjeta";
+
+    const nombre = document.createElement("p");
+    nombre.className = "m-nombre";
+    nombre.textContent = metrica.nombre;
+
+    const valores = document.createElement("p");
+    valores.className = "m-valores";
+    const vAntes = document.createElement("span");
+    vAntes.className = "m-antes";
+    vAntes.textContent = valorMetrica(antes);
+    const flecha = document.createElement("span");
+    flecha.className = "m-flecha";
+    flecha.setAttribute("aria-hidden", "true");
+    flecha.textContent = "→";
+    const vDespues = document.createElement("strong");
+    vDespues.textContent = valorMetrica(despues);
+    const unidad = document.createElement("span");
+    unidad.className = "m-unidad";
+    unidad.textContent = metrica.unidad;
+    valores.append(vAntes, flecha, vDespues, unidad);
+
+    const cambio = document.createElement("p");
+    cambio.className = "m-cambio";
+    if (!antes || despues === null || despues === undefined) {
+      cambio.textContent = "—";
+    } else {
+      const pct = ((despues - antes) / antes) * 100;
+      if (Math.abs(pct) < 0.05) {
+        cambio.textContent = "Sin cambio";
+      } else {
+        cambio.textContent = `${pct > 0 ? "+" : ""}${numero(pct)} % con el problema`;
+        cambio.classList.add(pct > 0 ? "sube" : "baja");
+      }
+    }
+
+    const ayuda = document.createElement("p");
+    ayuda.className = "m-ayuda";
+    ayuda.textContent = metrica.ayuda;
+
+    tarjeta.append(nombre, valores, cambio, ayuda);
+    contenedor.append(tarjeta);
+  }
+
+  $("metricas-nota").textContent =
+    `CUE = PUE × ${formato3.format(m.factor_kg_co2e_kwh)} kg CO₂e/kWh (factor de la red eléctrica de México). ` +
+    "Calculado con las 96 horas de evaluación del sitio elegido.";
+  seccion.hidden = false;
+}
+
+// Panel Balance neto
+
+const BALANCE_DE_EJEMPLO = true;
+
+const SUPUESTOS = { watts: 30, factor: 0.438, l_por_kwh: 1.2 };
+
+const formatoSig = new Intl.NumberFormat("es-MX", { maximumSignificantDigits: 2 });
+const formatoEntero = new Intl.NumberFormat("es-MX", { maximumFractionDigits: 0 });
+
+function cifra(valor) {
+  if (valor === null || valor === undefined) return "—";
+  if (valor === 0) return "0";
+  if (Math.abs(valor) < 1) return formatoSig.format(valor);
+  if (Math.abs(valor) < 100) return numero(valor);
+  return formatoEntero.format(valor);
+}
+
+function filaDato(etiqueta, valor) {
+  const fila = document.createElement("div");
+  const dt = document.createElement("dt");
+  dt.textContent = etiqueta;
+  const dd = document.createElement("dd");
+  dd.textContent = valor;
+  fila.append(dt, dd);
+  return fila;
+}
+
+let controladorBalance = null;
+
+async function cargarBalance() {
+  if (controladorBalance) controladorBalance.abort();
+  controladorBalance = new AbortController();
+  $("balance-error").hidden = true;
+
+  const params = { ...parametros(), dias: Number($("dias").value), ...SUPUESTOS };
+  const url = BALANCE_DE_EJEMPLO
+    ? "/static/mock/balance.json"
+    : `/api/balance?${new URLSearchParams(params)}`;
+
+  try {
+    const respuesta = await fetch(url, { signal: controladorBalance.signal, cache: "no-store" });
+    if (!respuesta.ok) {
+      let mensaje = `No se pudo calcular el balance (HTTP ${respuesta.status}).`;
+      try {
+        const error = await respuesta.json();
+        if (typeof error.detail === "string") mensaje = error.detail;
+      } catch (_) {}
+      throw new Error(mensaje);
+    }
+    pintarBalance(await respuesta.json());
+  } catch (error) {
+    if (error.name === "AbortError") return;
+    $("balance-error").textContent = error.message;
+    $("balance-error").hidden = false;
+  }
+}
+
+let ultimoBalance = null;   
+
+function pintarBalance(b) {
+  ultimoBalance = b;
+  const costo = b.costo_detector_anual;
+  const ben = b.beneficio;
+
+  $("balance-costo").replaceChildren(
+    filaDato("Tiempo de CPU", `${cifra(costo.segundos_cpu)} s`),
+    filaDato("Energía", `${cifra(costo.kwh)} kWh`),
+    filaDato("Emisiones", `${cifra(costo.g_co2e)} g CO₂e`),
+    filaDato("Agua indirecta", `${cifra(costo.l_agua_indirecta)} L`),
+  );
+
+  if (ben.unidad === "L") {
+    $("balance-evitado").textContent = `${cifra(ben.evitado)} L de agua`;
+    $("balance-evita").replaceChildren(
+      filaDato("Pérdida por hora con la fuga", `${cifra(ben.perdida_por_hora)} L`),
+      filaDato("Días sin descubrirla", `${b.supuestos.dias_sin_detector}`),
+    );
+  } else {
+    $("balance-evitado").textContent = `${cifra(ben.kwh_evitados)} kWh`;
+    $("balance-evita").replaceChildren(
+      filaDato("Energía extra por hora", `${cifra(ben.perdida_por_hora)} kWh`),
+      filaDato("Emisiones evitadas", `${cifra(ben.kg_co2e_evitados)} kg CO₂e`),
+      filaDato("Días sin descubrirla", `${b.supuestos.dias_sin_detector}`),
+    );
+  }
+
+  const sello = $("balance-sello");
+  sello.textContent = b.balance_positivo ? "✓ Balance positivo" : "Balance negativo";
+  sello.className = `balance-sello ${b.balance_positivo ? "positivo" : "negativo"}`;
+  sello.hidden = false;
+
+  const s = b.supuestos;
+  $("balance-supuestos").textContent =
+    `Supuestos: equipo de ${s.watts} W, ${s.revisiones_por_anio} revisiones y ${s.reentrenos_por_anio} reentrenamientos al año, ` +
+    `factor de la red ${s.factor_kg_co2e_kwh} kg CO₂e/kWh, ${s.agua_indirecta_l_kwh} L de agua por kWh generado.` +
+    (BALANCE_DE_EJEMPLO ? " (Datos de ejemplo: aún no cambian con los controles.)" : "");
+}
+
+$("dias").addEventListener("input", () => {
+  const d = Number($("dias").value);
+  $("dias-valor").textContent = `${d} ${d === 1 ? "día" : "días"}`;
+});
+$("dias").addEventListener("change", cargarBalance);

@@ -1,0 +1,7 @@
+{
+  "simulated": true,
+  "supuestos": {"watts": 30, "factor_kg_co2e_kwh": 0.438, "agua_indirecta_l_kwh": 1.2, "dias_sin_detector": 7, "revisiones_por_anio": 8760, "reentrenos_por_anio": 365},
+  "costo_detector_anual": {"segundos_cpu": 1.18, "kwh": 0.0000098, "g_co2e": 0.0043, "l_agua_indirecta": 0.0000118},
+  "beneficio": {"unidad": "L", "perdida_por_hora": 14.0, "evitado": 2350.0, "kwh_evitados": null, "kg_co2e_evitados": null},
+  "balance_positivo": true
+}

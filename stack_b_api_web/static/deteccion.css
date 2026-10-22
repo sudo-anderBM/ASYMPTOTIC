@@ -132,3 +132,59 @@ tr.mejor:hover{background:#e1eee5}
 .det-alerta.activa{stroke:#ebb17b;stroke-width:3}
 body.demo-en-curso .filter-panel{outline:2px solid #ebb17b;outline-offset:4px;border-radius:13px}
 @media(max-width:700px){.demo-barra{grid-template-columns:1fr;bottom:10px}.demo-texto{font-size:13px}}
+
+/* A2 · Tarjetas de métricas */
+.metricas{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:22px 25px;margin:0 0 18px}
+.metricas-cabecera{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap}
+.metricas .eyebrow{font-size:9px;margin-bottom:5px}
+.metricas h2{font-size:20px;font-weight:650;letter-spacing:-.5px;margin:0}
+.metricas-ayuda{margin:0;font-size:11px;color:var(--muted)}
+.m-tarjetas{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:16px}
+.m-tarjeta{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:16px 18px;min-width:0}
+.m-nombre{margin:0;font-size:11px;font-weight:750;letter-spacing:1px;color:var(--green)}
+.m-valores{margin:8px 0 4px;display:flex;align-items:baseline;flex-wrap:wrap;gap:6px;font-variant-numeric:tabular-nums}
+.m-antes{font-size:18px;color:var(--muted)}
+.m-flecha{color:var(--muted)}
+.m-valores strong{font-size:clamp(24px,2.2vw,32px);font-weight:650;letter-spacing:-1px;color:var(--ink)}
+.m-unidad{font-size:11px;color:var(--muted)}
+.m-cambio{margin:0 0 8px;font-size:12px;font-weight:650;color:var(--muted)}
+.m-cambio.sube{color:#b86629}
+.m-cambio.baja{color:var(--green)}
+.m-ayuda{margin:0;font-size:10.5px;line-height:1.5;color:var(--muted)}
+.metricas-nota{margin:14px 0 0;font-size:10px;color:var(--muted)}
+@media(max-width:800px){.m-tarjetas{grid-template-columns:1fr}}
+
+/* A3 · Tarjeta "Por qué importa en Yucatán" */
+.yucatan{display:flex;gap:18px;align-items:flex-start;background:#eaf1f2;border:1px solid #c9dcdf;border-radius:var(--radius);padding:20px 24px;margin:0 0 18px}
+.yucatan-icono{flex:none;width:42px;height:42px;border-radius:12px;background:#173b39;display:grid;place-items:center}
+.yucatan-icono svg{width:22px;height:22px;fill:#5e95a4}
+.yucatan .eyebrow{font-size:9px;margin-bottom:5px;color:#3f6f78}
+.yucatan h2{font-size:17px;font-weight:650;letter-spacing:-.3px;margin:0 0 10px;line-height:1.3}
+.yucatan-lista{margin:0;padding-left:18px;font-size:12.5px;line-height:1.65;color:var(--ink)}
+.yucatan-lista li+li{margin-top:4px}
+.yucatan-fuente{margin:10px 0 0;font-size:10px;color:var(--muted)}
+@media(max-width:520px){.yucatan{flex-direction:column;padding:18px}}
+
+/* A4 · Panel Balance neto */
+.det-balance{margin-top:23px}
+.balance-sello{margin:0;padding:6px 12px;border-radius:999px;font-size:11px;font-weight:750;letter-spacing:.6px;white-space:nowrap}
+.balance-sello.positivo{background:#e5f4e4;color:#1f5a4c}
+.balance-sello.negativo{background:#fbebeb;color:#8a2f2f}
+.balance-dias{max-width:520px;margin:6px 0 16px}
+.balance-dias output{color:var(--ink);font-weight:700}
+.balance-columnas{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.balance-col{border-radius:14px;padding:18px 20px;min-width:0}
+.balance-costo{background:var(--paper);border:1px solid var(--line)}
+.balance-evita{background:var(--ink);color:#fff}
+.balance-col-titulo{margin:0 0 10px;font-size:11px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:var(--muted)}
+.balance-evita .balance-col-titulo{color:#b8cec2}
+.balance-grande{margin:0 0 10px;font-size:clamp(30px,3vw,42px);font-weight:650;letter-spacing:-1.2px;line-height:1.05;color:#bfe6d2;font-variant-numeric:tabular-nums}
+.balance-datos{margin:0;display:grid;gap:8px}
+.balance-datos div{display:flex;justify-content:space-between;gap:12px;border-bottom:1px solid var(--line);padding-bottom:6px}
+.balance-evita .balance-datos div{border-color:#476863}
+.balance-datos dt{font-size:11.5px;color:var(--muted)}
+.balance-evita .balance-datos dt{color:#c7d8cf}
+.balance-datos dd{margin:0;font-size:13px;font-weight:650;font-variant-numeric:tabular-nums;text-align:right}
+.balance-supuestos{margin:14px 0 0;font-size:10.5px;color:var(--muted)}
+.balance-error{margin:10px 0 0;font-size:12px;color:#803a16}
+@media(max-width:800px){.balance-columnas{grid-template-columns:1fr}.det-balance .panel-heading{flex-direction:column;align-items:flex-start}}
