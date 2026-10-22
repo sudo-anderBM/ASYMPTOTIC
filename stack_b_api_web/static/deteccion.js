@@ -50,7 +50,8 @@ async function cargarEscenario() {
     pintarGrafica(datos);
     pintarVeredicto(datos); 
     pintarMetricas(datos.metricas);  
-    limpiarExplicacion();       
+    limpiarExplicacion(); 
+    cargarBalance();      
     $("estado").textContent = "Actualizado · Datos simulados";
   } catch (error) {
     if (error.name === "AbortError") return;   
@@ -1005,3 +1006,107 @@ function pintarMetricas(m) {
     "Calculado con las 96 horas de evaluación del sitio elegido.";
   seccion.hidden = false;
 }
+
+// Panel Balance neto
+
+const BALANCE_DE_EJEMPLO = true;
+
+const SUPUESTOS = { watts: 30, factor: 0.438, l_por_kwh: 1.2 };
+
+const formatoSig = new Intl.NumberFormat("es-MX", { maximumSignificantDigits: 2 });
+const formatoEntero = new Intl.NumberFormat("es-MX", { maximumFractionDigits: 0 });
+
+function cifra(valor) {
+  if (valor === null || valor === undefined) return "—";
+  if (valor === 0) return "0";
+  if (Math.abs(valor) < 1) return formatoSig.format(valor);
+  if (Math.abs(valor) < 100) return numero(valor);
+  return formatoEntero.format(valor);
+}
+
+function filaDato(etiqueta, valor) {
+  const fila = document.createElement("div");
+  const dt = document.createElement("dt");
+  dt.textContent = etiqueta;
+  const dd = document.createElement("dd");
+  dd.textContent = valor;
+  fila.append(dt, dd);
+  return fila;
+}
+
+let controladorBalance = null;
+
+async function cargarBalance() {
+  if (controladorBalance) controladorBalance.abort();
+  controladorBalance = new AbortController();
+  $("balance-error").hidden = true;
+
+  const params = { ...parametros(), dias: Number($("dias").value), ...SUPUESTOS };
+  const url = BALANCE_DE_EJEMPLO
+    ? "/static/mock/balance.json"
+    : `/api/balance?${new URLSearchParams(params)}`;
+
+  try {
+    const respuesta = await fetch(url, { signal: controladorBalance.signal, cache: "no-store" });
+    if (!respuesta.ok) {
+      let mensaje = `No se pudo calcular el balance (HTTP ${respuesta.status}).`;
+      try {
+        const error = await respuesta.json();
+        if (typeof error.detail === "string") mensaje = error.detail;
+      } catch (_) {}
+      throw new Error(mensaje);
+    }
+    pintarBalance(await respuesta.json());
+  } catch (error) {
+    if (error.name === "AbortError") return;
+    $("balance-error").textContent = error.message;
+    $("balance-error").hidden = false;
+  }
+}
+
+let ultimoBalance = null;   
+
+function pintarBalance(b) {
+  ultimoBalance = b;
+  const costo = b.costo_detector_anual;
+  const ben = b.beneficio;
+
+  $("balance-costo").replaceChildren(
+    filaDato("Tiempo de CPU", `${cifra(costo.segundos_cpu)} s`),
+    filaDato("Energía", `${cifra(costo.kwh)} kWh`),
+    filaDato("Emisiones", `${cifra(costo.g_co2e)} g CO₂e`),
+    filaDato("Agua indirecta", `${cifra(costo.l_agua_indirecta)} L`),
+  );
+
+  if (ben.unidad === "L") {
+    $("balance-evitado").textContent = `${cifra(ben.evitado)} L de agua`;
+    $("balance-evita").replaceChildren(
+      filaDato("Pérdida por hora con la fuga", `${cifra(ben.perdida_por_hora)} L`),
+      filaDato("Días sin descubrirla", `${b.supuestos.dias_sin_detector}`),
+    );
+  } else {
+    $("balance-evitado").textContent = `${cifra(ben.kwh_evitados)} kWh`;
+    $("balance-evita").replaceChildren(
+      filaDato("Energía extra por hora", `${cifra(ben.perdida_por_hora)} kWh`),
+      filaDato("Emisiones evitadas", `${cifra(ben.kg_co2e_evitados)} kg CO₂e`),
+      filaDato("Días sin descubrirla", `${b.supuestos.dias_sin_detector}`),
+    );
+  }
+
+  const sello = $("balance-sello");
+  sello.textContent = b.balance_positivo ? "✓ Balance positivo" : "Balance negativo";
+  sello.className = `balance-sello ${b.balance_positivo ? "positivo" : "negativo"}`;
+  sello.hidden = false;
+
+  const s = b.supuestos;
+  $("balance-supuestos").textContent =
+    `Supuestos: equipo de ${s.watts} W, ${s.revisiones_por_anio} revisiones y ${s.reentrenos_por_anio} reentrenamientos al año, ` +
+    `factor de la red ${s.factor_kg_co2e_kwh} kg CO₂e/kWh, ${s.agua_indirecta_l_kwh} L de agua por kWh generado.` +
+    (BALANCE_DE_EJEMPLO ? " (Datos de ejemplo: aún no cambian con los controles.)" : "");
+}
+
+$("dias").addEventListener("input", () => {
+  const d = Number($("dias").value);
+  $("dias-valor").textContent = `${d} ${d === 1 ? "día" : "días"}`;
+});
+$("dias").addEventListener("change", cargarBalance);

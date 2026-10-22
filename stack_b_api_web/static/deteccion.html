@@ -168,6 +168,31 @@
       </div>
     </section>
 
+        <section id="balance" class="panel det-balance" aria-labelledby="balance-titulo">
+      <div class="panel-heading">
+        <div><p class="eyebrow">BALANCE NETO</p><h2 id="balance-titulo">¿El detector ahorra más de lo que gasta?</h2></div>
+        <p id="balance-sello" class="balance-sello" hidden></p>
+      </div>
+      <p class="panel-description">Comparamos lo que cuesta tener el detector encendido todo un año con lo que evita perder si, sin él, la fuga tardara varios días en descubrirse.</p>
+      <div class="field balance-dias">
+        <label for="dias">Días hasta descubrir la fuga sin detector: <output id="dias-valor" for="dias">7 días</output></label>
+        <input id="dias" type="range" min="1" max="30" step="1" value="7">
+      </div>
+      <div class="balance-columnas">
+        <article class="balance-col balance-costo">
+          <p class="balance-col-titulo">Lo que cuesta el detector al año</p>
+          <dl class="balance-datos" id="balance-costo"></dl>
+        </article>
+        <article class="balance-col balance-evita">
+          <p class="balance-col-titulo">Lo que evita</p>
+          <p class="balance-grande" id="balance-evitado">—</p>
+          <dl class="balance-datos" id="balance-evita"></dl>
+        </article>
+      </div>
+      <p id="balance-supuestos" class="balance-supuestos"></p>
+      <p id="balance-error" class="balance-error" hidden></p>
+    </section>
+
     <section id="resumen" class="panel det-resumen" aria-labelledby="resumen-titulo">
       <div class="panel-heading">
         <div><p class="eyebrow">RESUMEN DEL BARRIDO</p><h2 id="resumen-titulo">Detección según el tamaño de la fuga</h2></div>

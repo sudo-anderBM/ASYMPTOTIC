@@ -164,3 +164,27 @@ body.demo-en-curso .filter-panel{outline:2px solid #ebb17b;outline-offset:4px;bo
 .yucatan-lista li+li{margin-top:4px}
 .yucatan-fuente{margin:10px 0 0;font-size:10px;color:var(--muted)}
 @media(max-width:520px){.yucatan{flex-direction:column;padding:18px}}
+
+/* A4 · Panel Balance neto */
+.det-balance{margin-top:23px}
+.balance-sello{margin:0;padding:6px 12px;border-radius:999px;font-size:11px;font-weight:750;letter-spacing:.6px;white-space:nowrap}
+.balance-sello.positivo{background:#e5f4e4;color:#1f5a4c}
+.balance-sello.negativo{background:#fbebeb;color:#8a2f2f}
+.balance-dias{max-width:520px;margin:6px 0 16px}
+.balance-dias output{color:var(--ink);font-weight:700}
+.balance-columnas{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.balance-col{border-radius:14px;padding:18px 20px;min-width:0}
+.balance-costo{background:var(--paper);border:1px solid var(--line)}
+.balance-evita{background:var(--ink);color:#fff}
+.balance-col-titulo{margin:0 0 10px;font-size:11px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:var(--muted)}
+.balance-evita .balance-col-titulo{color:#b8cec2}
+.balance-grande{margin:0 0 10px;font-size:clamp(30px,3vw,42px);font-weight:650;letter-spacing:-1.2px;line-height:1.05;color:#bfe6d2;font-variant-numeric:tabular-nums}
+.balance-datos{margin:0;display:grid;gap:8px}
+.balance-datos div{display:flex;justify-content:space-between;gap:12px;border-bottom:1px solid var(--line);padding-bottom:6px}
+.balance-evita .balance-datos div{border-color:#476863}
+.balance-datos dt{font-size:11.5px;color:var(--muted)}
+.balance-evita .balance-datos dt{color:#c7d8cf}
+.balance-datos dd{margin:0;font-size:13px;font-weight:650;font-variant-numeric:tabular-nums;text-align:right}
+.balance-supuestos{margin:14px 0 0;font-size:10.5px;color:var(--muted)}
+.balance-error{margin:10px 0 0;font-size:12px;color:#803a16}
+@media(max-width:800px){.balance-columnas{grid-template-columns:1fr}.det-balance .panel-heading{flex-direction:column;align-items:flex-start}}
