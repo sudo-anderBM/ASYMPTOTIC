@@ -24,24 +24,24 @@ Magnitudes del barrido: 5 %, 10 %, 20 %, 30 %, 50 %, 100 %
 -- datos normal --
 detector               det. 10 %     IC 95 %   FA/dia  fit+pred ms  >=90 % desde   curva (% por magnitud)
 1_reglas                     0 %       [0-4]    0.000          0.2         nunca   0 0 0 0 0 33
-2_isolation_forest          33 %     [24-44]    1.275        102.8         nunca   31 33 38 42 47 49
-3_residual_3sigma          100 %    [96-100]    0.008          5.1          10 %   88 100 100 100 100 100
-4_residual_cusum           100 %    [96-100]    0.283          6.5           5 %   100 100 100 100 100 100
-5_zscore_simple             48 %     [38-58]    0.000          1.3          30 %   0 48 83 100 100 100
+2_isolation_forest          33 %     [24-44]    1.275        100.1         nunca   31 33 38 42 47 49
+3_residual_3sigma          100 %    [96-100]    0.008          5.3          10 %   88 100 100 100 100 100
+4_residual_cusum           100 %    [96-100]    0.283          6.9           5 %   100 100 100 100 100 100
+5_zscore_simple             48 %     [38-58]    0.000          1.2          30 %   0 48 83 100 100 100
 
 -- datos dificil --
 detector               det. 10 %     IC 95 %   FA/dia  fit+pred ms  >=90 % desde   curva (% por magnitud)
 1_reglas                     0 %       [0-4]    0.000          0.2         nunca   0 0 0 0 12 33
-2_isolation_forest          32 %     [24-42]    1.250        102.8         nunca   28 32 41 47 48 53
-3_residual_3sigma           39 %     [30-49]    0.058          5.1          20 %   16 39 92 100 100 100
-4_residual_cusum            77 %     [67-84]    0.442          6.5          20 %   39 77 100 100 100 100
-5_zscore_simple             22 %     [15-32]    0.008          1.3          50 %   4 22 49 66 100 100
+2_isolation_forest          32 %     [24-42]    1.250        100.1         nunca   28 32 41 47 48 53
+3_residual_3sigma           39 %     [30-49]    0.058          5.3          20 %   16 39 92 100 100 100
+4_residual_cusum            77 %     [67-84]    0.442          6.9          20 %   39 77 100 100 100 100
+5_zscore_simple             22 %     [15-32]    0.008          1.2          50 %   4 22 49 66 100 100
 
-meta: {"semillas": 10, "eventos_por_punto": 90, "generado": "2026-10-21T08:34:20Z", "equipo": "Windows-11-10.0.26200-SP0", "python": "3.13.12", "sklearn": "1.9.1", "nota": "Tiempos medidos en este equipo (mediana, datos normales, 10 repeticiones). Datos simulados."}
+meta: {"semillas": 10, "eventos_por_punto": 90, "generado": "2026-10-22T10:45:18Z", "equipo": "Windows-11-10.0.26200-SP0", "python": "3.12.10", "numpy": "2.3.5", "pandas": "2.2.3", "sklearn": "1.8.0", "filas_ref": 216, "filas_eval": 288, "nota": "Tiempos medidos en este equipo (mediana, datos normales, 10 repeticiones). Datos simulados."}
 
 === 5. Balance neto del detector (fuga 10 %, SIM-B, 7 dias) ===
-Supuestos: {"watts": 30.0, "factor_kg_co2e_kwh": 0.444, "agua_indirecta_l_kwh": 1.2, "dias_sin_detector": 7.0, "revisiones_por_anio": 8760, "reentrenos_por_anio": 365}
-Costo anual del detector: {"segundos_cpu": 1.175, "kwh": 9.79e-06, "g_co2e": 0.00434861, "l_agua_indirecta": 1.175e-05}
+Supuestos: {"watts": 30.0, "factor_kg_co2e_kwh": 0.444, "agua_indirecta_l_kwh": 1.2, "dias_sin_detector": 7.0, "revisiones_por_anio": 8760, "reentrenos_por_anio": 365, "potencia_medida": false, "factor_contexto": "Sistema El├⌐ctrico Nacional 2024, aviso SEMARNAT 28/02/2025", "detector": "3_residual_3sigma", "tiempos_de": "results/sweep_fuga.json"}
+Costo anual del detector: {"segundos_cpu": 1.246, "kwh": 1.038e-05, "g_co2e": 0.00460858, "l_agua_indirecta": 1.246e-05}
 Beneficio: {"unidad": "L", "perdida_por_hora": 14.0, "evitado": 2352.5, "kwh_evitados": null, "kg_co2e_evitados": null}
 Balance positivo: True
 
